@@ -18,6 +18,24 @@ func isPref(alt1, alt2 Alternative, prefs []Alternative) bool {
 	return rank(alt1, prefs) < rank(alt2, prefs)
 }
 
+func isPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
+	count := 0
+	for _, alts := range p {
+		if isPref(alt1, alt2, alts) {
+			count++
+		} else {
+			count--
+		}
+	}
+	if count == 0 {
+		return false, errors.New("pas de préférence, erreur relation d'ordre nécessaire")
+	} else if count >= 1 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
 func maxCount(count Count) (bestAlts []Alternative) {
 	max := 0
 	for i, v := range count {

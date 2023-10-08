@@ -3,11 +3,11 @@ package comsoc
 func CondorcetWinner(p Profile) (bestAlts []Alternative, err error) {
 	bestAlts = make([]Alternative, 0)
 
-	for i := 1; i <= len(p[0]); i++ { // se base sur le fait que le profile soit vérifié
+	for _, v := range p[0] { // se base sur le fait que le profile soit vérifié
 		winner := true
-		for j := 1; j <= len(p[0]); j++ {
-			if i != j {
-				check, err := isPrefProfil(Alternative(i), Alternative(j), p)
+		for _, v2 := range p[0] {
+			if v != v2 {
+				check, err := isPrefProfil(v, v2, p)
 				if err != nil {
 					return bestAlts, err
 				}
@@ -18,7 +18,7 @@ func CondorcetWinner(p Profile) (bestAlts []Alternative, err error) {
 			}
 		}
 		if winner {
-			bestAlts = append(bestAlts, Alternative(i))
+			bestAlts = append(bestAlts, Alternative(v))
 		}
 	}
 	return bestAlts, nil

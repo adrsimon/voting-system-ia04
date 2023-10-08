@@ -71,3 +71,37 @@ func TestSWFFactory(t *testing.T) {
 	}
 
 }
+
+func TestScfFactory(t *testing.T) {
+	prefs := [][]Alternative{
+		{1, 3, 2},
+		{3, 2, 1},
+		{3, 2, 1},
+	}
+
+	tiebreak := TieBreakFactory([]Alternative{1, 2, 3})
+	scf := SCFFactory(BordaSCF, tiebreak)
+	res, err := scf(prefs)
+	
+	if err != nil {
+		t.Error(err)
+	}
+	if res != 3 {
+		t.Errorf("error, winner should be 3, %d computed", res)
+	}
+
+	prefs2 := [][]Alternative{
+		{1, 3, 2},
+		{3, 2, 1},
+		{2, 1, 3},
+	}
+	scf2 := SCFFactory(BordaSCF, tiebreak)
+	res2, err := scf2(prefs2)
+
+	if err != nil {
+		t.Error(err)
+	}
+	if res2 != 1 {
+		t.Errorf("error, winner should be 1, %d computed", res)
+	}
+}

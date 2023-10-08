@@ -1,12 +1,14 @@
 package comsoc
 
+import "golang.org/x/exp/slices"
+
 func SWFFactory(swf func(p Profile) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile) ([]Alternative, error) {
 	f := func(profile Profile) ([]Alternative, error) {
 		count, err := swf(profile)
 		if err != nil {
 			return nil, err
 		}
-		alts := make([]Alternative, len(count))
+		alts := make([]Alternative, 0)
 		for len(count) >= 1 {
 			max := maxCount(count)
 			for len(max) > 1 {
@@ -15,7 +17,9 @@ func SWFFactory(swf func(p Profile) (Count, error), tiebreak func([]Alternative)
 					return nil, err
 				}
 				delete(count, maxAlt)
-				max = append(max[:maxAlt], max[maxAlt+1:]...)
+				alts = append(alts, maxAlt)
+				idx := slices.Index(max, maxAlt)
+				max = append(max[:idx], max[idx+1:]...)
 			}
 			alts = append(alts, max[0])
 			delete(count, max[0])

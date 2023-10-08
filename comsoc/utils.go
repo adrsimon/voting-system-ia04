@@ -42,6 +42,7 @@ func maxCount(count Count) (bestAlts []Alternative) {
 		if v > max {
 			bestAlts = make([]Alternative, 0)
 			bestAlts = append(bestAlts, i)
+			max = v
 		} else if v == max {
 			bestAlts = append(bestAlts, i)
 		}

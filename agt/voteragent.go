@@ -99,7 +99,7 @@ func (ag Agent) TreatResponse(r *http.Response) int {
 
 func (ag Agent) StartSession(rule string, deadline string, voterIds []string, alts int, tieBreak []int) (res int, err error){
 	port := 8080
-	requestURL := fmt.Sprintf("http://localhost:%d", port)
+	requestURL := fmt.Sprintf("http://localhost:%d/new_ballot", port)
 
 	session := NewBallotRequest{
 		Rule: rule,

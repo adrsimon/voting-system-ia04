@@ -17,7 +17,7 @@ type ServerRest struct {
 	id           string
 	addr         string
 	ballotAgents []ballotAgent
-	count        int
+	count        int64
 }
 
 func NewServerRest(addr string) *ServerRest {
@@ -25,16 +25,16 @@ func NewServerRest(addr string) *ServerRest {
 }
 
 type ballotAgent struct {
-	ballotID int
+	ballotID int64
 	rule     string
 	deadline time.Time
 	voterID  []string
 	profile  comsoc.Profile
-	nbrAlt   int
-	tiebreak []int
+	nbrAlt   int64
+	tiebreak []int64
 }
 
-func newBallotAgent(ballotID int, rule string, deadline time.Time, voterID []string, profile comsoc.Profile, nbrAlt int, tiebreak []int) *ballotAgent {
+func newBallotAgent(ballotID int64, rule string, deadline time.Time, voterID []string, profile comsoc.Profile, nbrAlt int64, tiebreak []int64) *ballotAgent {
 	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak}
 }
 
@@ -64,29 +64,42 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	if !vs.checkMethod("POST", w, r) {
 		return
 	}
+
 	vs.Lock()
 	defer vs.Unlock()
+
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		return
+	}
+
 	req := NewBallotRequest{}
-	err := json.Unmarshal(buf.Bytes(), &req)
+	err = json.Unmarshal(buf.Bytes(), &req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
 	//faire verif request good
 	end, err := time.Parse(time.RFC3339, req.Deadline)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
 	vs.ballotAgents = append(vs.ballotAgents, *newBallotAgent(vs.count, req.Rule, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak))
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
 	err = binary.Write(buf, binary.LittleEndian, vs.count)
 	if err != nil {
-		fmt.Println("binary.Write failed:", err)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
+
 	vs.count++
-	w.Write(buf.Bytes())
+	_, err = w.Write(buf.Bytes())
+	fmt.Println(buf.Bytes())
+	if err != nil {
+		return
+	}
 }
 
 func (vs *ServerRest) Start() {

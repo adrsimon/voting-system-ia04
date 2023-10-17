@@ -1,10 +1,10 @@
 package agt
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
-	"bytes"
 
 	comsoc "github.com/adrsimon/voting-system-ia04/comsoc"
 )
@@ -14,7 +14,7 @@ type AgentID string
 type Agent struct {
 	agentId AgentID
 	prefs   []comsoc.Alternative
-	options []int
+	options []int64
 }
 
 type AgentI interface {
@@ -27,18 +27,18 @@ type AgentI interface {
 }
 
 type NewBallotRequest struct {
-	Rule 		 string`json:"rule"`
-	Deadline string`json:"deadline"`
-	VoterIds []string`json:"voterIds"`
-	Alts 		 int`json:"alts"`
-	TieBreak []int`json:"tieBreak"`
+	Rule     string   `json:"rule"`
+	Deadline string   `json:"deadline"`
+	VoterIds []string `json:"voterIds"`
+	Alts     int64    `json:"alts"`
+	TieBreak []int64  `json:"tieBreak"`
 }
 
 type Response struct {
-	Result int `json:"res"`
+	Result int64 `json:"res"`
 }
 
-func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int) *Agent {
+func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int64) *Agent {
 	return &Agent{id, prefs, opts}
 }
 
@@ -86,26 +86,33 @@ func (ag Agent) Prefers(a comsoc.Alternative, b comsoc.Alternative) bool {
 	return false
 }
 
-func (ag Agent) TreatResponse(r *http.Response) int {
+func (ag Agent) TreatResponse(r *http.Response) int64 {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		return -1
+	}
 
 	var resp Response
 
-	json.Unmarshal(buf.Bytes(), &resp)
+	err = json.Unmarshal(buf.Bytes(), &resp)
+	if err != nil {
+		return -2
+	}
+	fmt.Println(resp.Result)
 
 	return resp.Result
 }
 
-func (ag Agent) StartSession(rule string, deadline string, voterIds []string, alts int, tieBreak []int) (res int, err error){
+func (ag Agent) StartSession(rule string, deadline string, voterIds []string, alts int64, tieBreak []int64) (res int64, err error) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/new_ballot", port)
 
 	session := NewBallotRequest{
-		Rule: rule,
+		Rule:     rule,
 		Deadline: deadline,
 		VoterIds: voterIds,
-		Alts: alts,
+		Alts:     alts,
 		TieBreak: tieBreak,
 	}
 
@@ -122,6 +129,7 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []string, al
 	}
 
 	res = ag.TreatResponse(resp)
+	fmt.Printf("result : %d\n", res)
 	return
 }
 

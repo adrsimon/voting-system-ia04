@@ -86,17 +86,18 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
+	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)
 	vs.ballotAgents = append(vs.ballotAgents, *newBallotAgent(vs.count, req.Rule, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak))
+	vs.count++
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
-	err = binary.Write(buf, binary.LittleEndian, vs.count)
+	resp, err := json.Marshal(Response{req.Rule, vs.count})
+	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	vs.count++
 	_, err = w.Write(buf.Bytes())
-	fmt.Println(buf.Bytes())
 	if err != nil {
 		return
 	}

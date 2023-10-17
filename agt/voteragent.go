@@ -35,7 +35,8 @@ type NewBallotRequest struct {
 }
 
 type Response struct {
-	Result int64 `json:"res"`
+	Rule       string `json:"rule"`
+	NbSessions int64  `json:"nbSessions"`
 }
 
 func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int64) *Agent {
@@ -86,22 +87,22 @@ func (ag Agent) Prefers(a comsoc.Alternative, b comsoc.Alternative) bool {
 	return false
 }
 
-func (ag Agent) TreatResponse(r *http.Response) int64 {
+func (ag Agent) TreatResponse(r *http.Response) (Response, error) {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		return -1
+		return Response{}, err
 	}
 
 	var resp Response
 
 	err = json.Unmarshal(buf.Bytes(), &resp)
 	if err != nil {
-		return -2
+		fmt.Println("failed unmarshalling")
+		return Response{}, err
 	}
-	fmt.Println(resp.Result)
 
-	return resp.Result
+	return resp, nil
 }
 
 func (ag Agent) StartSession(rule string, deadline string, voterIds []string, alts int64, tieBreak []int64) (res int64, err error) {
@@ -128,8 +129,14 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []string, al
 		return
 	}
 
-	res = ag.TreatResponse(resp)
-	fmt.Printf("result : %d\n", res)
+	result, err := ag.TreatResponse(resp)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("failed treating response")
+		return
+	}
+	fmt.Printf("new session based on the %s method has been started\n", result.Rule)
+	fmt.Printf("there are %d sessions ongoing\n", result.NbSessions)
 	return
 }
 

@@ -9,36 +9,6 @@ import (
 	comsoc "github.com/adrsimon/voting-system-ia04/comsoc"
 )
 
-type AgentID string
-
-type Agent struct {
-	agentId AgentID
-	prefs   []comsoc.Alternative
-	options []int64
-}
-
-type AgentI interface {
-	Equal(ag AgentI) bool
-	DeepEqual(ag AgentI) bool
-	Clone() AgentI
-	String() string
-	Prefers(a comsoc.Alternative, b comsoc.Alternative) bool
-	Start()
-}
-
-type NewBallotRequest struct {
-	Rule     string   `json:"rule"`
-	Deadline string   `json:"deadline"`
-	VoterIds []string `json:"voterIds"`
-	Alts     int64    `json:"alts"`
-	TieBreak []int64  `json:"tieBreak"`
-}
-
-type Response struct {
-	Rule       string `json:"rule"`
-	NbSessions int64  `json:"nbSessions"`
-}
-
 func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int64) *Agent {
 	return &Agent{id, prefs, opts}
 }
@@ -87,25 +57,25 @@ func (ag Agent) Prefers(a comsoc.Alternative, b comsoc.Alternative) bool {
 	return false
 }
 
-func (ag Agent) TreatResponse(r *http.Response) (Response, error) {
+func (ag Agent) TreatResponse(r *http.Response) (NewBallotResponse, error) {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		return Response{}, err
+		return NewBallotResponse{}, err
 	}
 
-	var resp Response
+	var resp NewBallotResponse
 
 	err = json.Unmarshal(buf.Bytes(), &resp)
 	if err != nil {
 		fmt.Println("failed unmarshalling")
-		return Response{}, err
+		return NewBallotResponse{}, err
 	}
 
 	return resp, nil
 }
 
-func (ag Agent) StartSession(rule string, deadline string, voterIds []string, alts int64, tieBreak []int64) (res int64, err error) {
+func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, alts int64, tieBreak []int64) (res int64, err error) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/new_ballot", port)
 
@@ -126,6 +96,7 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []string, al
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("[%d] %s", resp.StatusCode, resp.Status)
+		fmt.Println(err)
 		return
 	}
 
@@ -135,13 +106,36 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []string, al
 		fmt.Println("failed treating response")
 		return
 	}
-	fmt.Printf("new session based on the %s method has been started\n", result.Rule)
-	fmt.Printf("there are %d sessions ongoing\n", result.NbSessions)
-	return
+	fmt.Printf("new session started with id %d\n", result.BallotID)
+	return result.BallotID, nil
 }
 
-func (ag Agent) Vote() {
+func (ag Agent) Vote(sessionID int64) {
+	port := 8080
+	requestURL := fmt.Sprintf("http://localhost:%d/vote", port)
 
+	vote := VoteRequest{
+		VoterID:  ag.agentId,
+		BallotID: sessionID,
+		Prefs:    ag.prefs,
+		Options:  ag.options,
+	}
+
+	data, _ := json.Marshal(vote)
+
+	resp, err := http.Post(requestURL, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("[%d] %s", resp.StatusCode, resp.Status)
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("vote has been sent successfully")
+	return
 }
 
 func (ag Agent) GetResults() {

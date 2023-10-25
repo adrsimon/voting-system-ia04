@@ -8,33 +8,15 @@ import (
 	"github.com/adrsimon/voting-system-ia04/comsoc"
 	"log"
 	"net/http"
-	"sync"
+	"slices"
 	"time"
 )
-
-type ServerRest struct {
-	sync.Mutex
-	id           string
-	addr         string
-	ballotAgents []ballotAgent
-	count        int64
-}
 
 func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make([]ballotAgent, 0), count: 0}
 }
 
-type ballotAgent struct {
-	ballotID int64
-	rule     string
-	deadline time.Time
-	voterID  []string
-	profile  comsoc.Profile
-	nbrAlt   int64
-	tiebreak []int64
-}
-
-func newBallotAgent(ballotID int64, rule string, deadline time.Time, voterID []string, profile comsoc.Profile, nbrAlt int64, tiebreak []int64) *ballotAgent {
+func newBallotAgent(ballotID int64, rule string, deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64) *ballotAgent {
 	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak}
 }
 
@@ -75,10 +57,10 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)
 	vs.ballotAgents = append(vs.ballotAgents, *newBallotAgent(vs.count, req.Rule, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak))
-	vs.count++
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
-	resp, err := json.Marshal(Response{req.Rule, vs.count})
+	resp, err := json.Marshal(NewBallotResponse{vs.count})
+	vs.count++
 	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
 		return
@@ -90,9 +72,57 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
+	if !vs.checkMethod("POST", w, r) {
+		return
+	}
+
+	vs.Lock()
+	defer vs.Unlock()
+
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		return
+	}
+
+	req := VoteRequest{}
+	err = json.Unmarshal(buf.Bytes(), &req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	ba := ballotAgent{}
+	for _, b := range vs.ballotAgents {
+		if b.ballotID == req.BallotID {
+			ba = b
+		}
+	}
+
+	if ba.ballotID == 0 { // pas de ballotID => 400
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if ba.deadline.Before(time.Now()) { // deadline dépassée => 503
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	if !slices.Contains(ba.voterID, req.VoterID) { // pas autorisé à voter => 403
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ba.profile = append(ba.profile, req.Prefs)
+	ba.voterID = append(ba.voterID, req.VoterID)
+	vs.ballotAgents[ba.ballotID] = ba
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (vs *ServerRest) Start() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/new_ballot", vs.newBallot)
+	mux.HandleFunc("/vote", vs.vote)
 
 	s := &http.Server{
 		Addr:           vs.addr,

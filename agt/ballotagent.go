@@ -47,19 +47,6 @@ func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.
 	return true
 }
 
-func (vs *ServerRest) greet(w http.ResponseWriter, r *http.Request) {
-	if !vs.checkMethod("GET", w, r) {
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	vs.Lock()
-	defer vs.Unlock()
-
-	msg := fmt.Sprintf("Hello world !")
-	w.Write([]byte(msg))
-}
-
 func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	if !vs.checkMethod("POST", w, r) {
 		return
@@ -105,7 +92,6 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 
 func (vs *ServerRest) Start() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/hello", vs.greet)
 	mux.HandleFunc("/new_ballot", vs.newBallot)
 
 	s := &http.Server{

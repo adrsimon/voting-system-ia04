@@ -23,5 +23,6 @@ func main() {
 	}
 
 	ag.Vote(ballotID) // success
+	ag.Vote(ballotID) // failure
 	// TODO : cant vote two times
 }

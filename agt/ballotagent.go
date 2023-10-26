@@ -29,6 +29,17 @@ func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.
 	return true
 }
 
+func (ba *ballotAgent) removeVoter(agID AgentID) {
+	for i, v := range ba.voterID {
+		if v == agID {
+			a := ba.voterID[:i]
+			b := ba.voterID[i+1:]
+			fmt.Println(a, b)
+			ba.voterID = append(ba.voterID[:i], ba.voterID[i+1:]...)
+		}
+	}
+}
+
 func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	if !vs.checkMethod("POST", w, r) {
 		return
@@ -99,10 +110,10 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if ba.ballotID == 0 { // pas de ballotID => 400
+	/*if ba.ballotID == 0 { // pas de ballotID => 400
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
+	}*/
 	if ba.deadline.Before(time.Now()) { // deadline dépassée => 503
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
@@ -113,9 +124,9 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ba.profile = append(ba.profile, req.Prefs)
-	ba.voterID = append(ba.voterID, req.VoterID)
+	ba.removeVoter(req.VoterID)
 	vs.ballotAgents[ba.ballotID] = ba
-
+	fmt.Printf("voter n°%s has voted for vote n°%d \n", req.VoterID, req.BallotID)
 	w.WriteHeader(http.StatusOK)
 }
 

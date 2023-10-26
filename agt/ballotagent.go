@@ -109,6 +109,7 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 			ba = b
 		}
 	}
+	// un truc a faire si rien trouvé erreur
 
 	/*if ba.ballotID == 0 { // pas de ballotID => 400
 		w.WriteHeader(http.StatusBadRequest)
@@ -122,7 +123,6 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-
 	ba.profile = append(ba.profile, req.Prefs)
 	ba.removeVoter(req.VoterID)
 	vs.ballotAgents[ba.ballotID] = ba

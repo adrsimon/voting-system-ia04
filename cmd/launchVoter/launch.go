@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/adrsimon/voting-system-ia04/agt"
 	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"time"
 )
 
 func main() {
@@ -22,7 +23,9 @@ func main() {
 		return
 	}
 
-	ag.Vote(ballotID) // success
-	ag.Vote(ballotID) // failure
+	go ag.Vote(ballotID) // success
+	go ag.Vote(ballotID) // failure
+	go ag.Vote(ballotID)
+	time.Sleep(1 * time.Second)
 	// TODO : cant vote two times
 }

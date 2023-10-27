@@ -41,7 +41,8 @@ type NewBallotRequest struct {
 
 type ballotAgent struct {
 	ballotID int64
-	rule     string
+	rule     func(profile comsoc.Profile) ([]comsoc.Alternative, error)
+	ruleApp  func(profile comsoc.Profile, tresholds []int64) ([]comsoc.Alternative, error)
 	deadline time.Time
 	voterID  []AgentID
 	profile  comsoc.Profile
@@ -58,4 +59,13 @@ type VoteRequest struct {
 
 type NewBallotResponse struct {
 	BallotID int64 `json:"ballot-id"`
+}
+
+type ResultRequest struct {
+	BallotID int64 `json:"ballot-id"`
+}
+
+type ResultResponse struct {
+	Winner  int64   `json:"winner"`
+	Ranking []int64 `json:"ranking,omitempty"`
 }

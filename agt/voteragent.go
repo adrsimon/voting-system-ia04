@@ -138,6 +138,39 @@ func (ag Agent) Vote(sessionID int64) {
 	return
 }
 
-func (ag Agent) GetResults() {
+func (ag Agent) GetResults(sessionID int64) {
+	port := 8080
+	requestURL := fmt.Sprintf("http://localhost:%d/result", port)
 
+	obj := ResultRequest{sessionID}
+	data, _ := json.Marshal(obj)
+
+	resp, err := http.Post(requestURL, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("[%d] %s", resp.StatusCode, resp.Status)
+		fmt.Println(err)
+		return
+	}
+	buf := new(bytes.Buffer)
+	_, err2 := buf.ReadFrom(resp.Body)
+	if err2 != nil {
+		fmt.Println(err2)
+		return
+	}
+
+	var result ResultResponse
+	result.Ranking = make([]int64, 0)
+
+	err = json.Unmarshal(buf.Bytes(), &result)
+	if err != nil {
+		fmt.Println("failed unmarshalling")
+		return
+	}
+	fmt.Printf("the winner of the vote %d is %d ", sessionID, result.Winner)
+	if len(result.Ranking) > 0 {
+		fmt.Printf("the ranking of the vote is '%v'", result.Ranking)
+	}
 }

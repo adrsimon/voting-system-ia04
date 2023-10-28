@@ -11,7 +11,7 @@ type AgentID string
 type Agent struct {
 	agentId AgentID
 	prefs   []comsoc.Alternative
-	options []int64
+	options map[string][]int64
 }
 
 type AgentI interface {
@@ -40,21 +40,22 @@ type NewBallotRequest struct {
 }
 
 type ballotAgent struct {
-	ballotID int64
-	rule     func(profile comsoc.Profile) ([]comsoc.Alternative, error)
-	ruleApp  func(profile comsoc.Profile, tresholds []int64) ([]comsoc.Alternative, error)
-	deadline time.Time
-	voterID  []AgentID
-	profile  comsoc.Profile
-	nbrAlt   int64
-	tiebreak []int64
+	ballotID   int64
+	rule       func(profile comsoc.Profile) ([]comsoc.Alternative, error)
+	ruleApp    func(profile comsoc.Profile, tresholds []int) ([]comsoc.Alternative, error)
+	deadline   time.Time
+	voterID    []AgentID
+	profile    comsoc.Profile
+	nbrAlt     int64
+	tiebreak   []int64
+	thresholds []int
 }
 
 type VoteRequest struct {
 	VoterID  AgentID              `json:"agent-id"`
 	BallotID int64                `json:"ballot-id"`
 	Prefs    []comsoc.Alternative `json:"prefs"`
-	Options  []int64              `json:"options"`
+	Options  map[string][]int64   `json:"options,omitempty"`
 }
 
 type NewBallotResponse struct {
@@ -66,6 +67,6 @@ type ResultRequest struct {
 }
 
 type ResultResponse struct {
-	Winner  int64   `json:"winner"`
-	Ranking []int64 `json:"ranking,omitempty"`
+	Winner  comsoc.Alternative   `json:"winner"`
+	Ranking []comsoc.Alternative `json:"ranking,omitempty"`
 }

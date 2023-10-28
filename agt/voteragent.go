@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	comsoc "github.com/adrsimon/voting-system-ia04/comsoc"
 )
 
-func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int64) *Agent {
+func NewAgent(id AgentID, prefs []comsoc.Alternative, opts map[string][]int64) *Agent {
 	return &Agent{id, prefs, opts}
 }
 
@@ -25,7 +26,7 @@ func (ag1 Agent) Equal(ag2 Agent) bool {
 	}
 
 	for i := range ag1.options {
-		if ag1.options[i] != ag2.options[i] {
+		if reflect.DeepEqual(ag1.options[i], ag2.options[i]) {
 			return false
 		}
 	}
@@ -147,6 +148,7 @@ func (ag Agent) GetResults(sessionID int64) {
 
 	resp, err := http.Post(requestURL, "application/json", bytes.NewBuffer(data))
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	if resp.StatusCode != http.StatusOK {
@@ -162,7 +164,7 @@ func (ag Agent) GetResults(sessionID int64) {
 	}
 
 	var result ResultResponse
-	result.Ranking = make([]int64, 0)
+	result.Ranking = make([]comsoc.Alternative, 0)
 
 	err = json.Unmarshal(buf.Bytes(), &result)
 	if err != nil {

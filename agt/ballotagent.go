@@ -16,8 +16,8 @@ func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make([]ballotAgent, 0), count: 0}
 }
 
-func newBallotAgent(ballotID int64, rule func(profile comsoc.Profile) ([]comsoc.Alternative, error), ruleApp func(profile comsoc.Profile, tresholds []int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64) *ballotAgent {
-	return &ballotAgent{ballotID: ballotID, rule: rule, ruleApp: ruleApp, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak}
+func newBallotAgent(ballotID int64, rule func(profile comsoc.Profile) ([]comsoc.Alternative, error), ruleApp func(profile comsoc.Profile, tresholds []int) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64, thresholds []int) *ballotAgent {
+	return &ballotAgent{ballotID: ballotID, rule: rule, ruleApp: ruleApp, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
 }
 
 func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.Request) bool {
@@ -74,15 +74,14 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ba := *newBallotAgent(vs.count, nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak)
+	ba := *newBallotAgent(vs.count, nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int, 0))
 	switch req.Rule {
-	case "Majoritaire":
+	case "Majority":
 		ba.rule = comsoc.SWFFactory(comsoc.MajoritySWF, comsoc.TieBreakFactory(tieB))
 	case "Borda":
 		ba.rule = comsoc.SWFFactory(comsoc.BordaSWF, comsoc.TieBreakFactory(tieB))
 	case "Approval":
-		// il faut creer factory pour Approval erreur en attendant
-		w.WriteHeader(http.StatusBadRequest)
+		ba.ruleApp = comsoc.SWFFactoryApproval(comsoc.ApprovalSWF, comsoc.TieBreakFactory(tieB))
 	// AJOUTER COPELAND & STV
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -188,7 +187,43 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTooEarly)
 		return
 	}
+	if ba.rule != nil {
+		ranking, err := ba.rule(ba.profile)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		winner := ranking[0]
+		buf.Reset()
+		resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
+		vs.count++
+		err = binary.Write(buf, binary.LittleEndian, resp)
+		if err != nil {
+			return
+		}
 
+		_, err = w.Write(buf.Bytes())
+		if err != nil {
+			return
+		}
+	} else {
+		ranking, err := ba.ruleApp(ba.profile, ba.thresholds)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		winner := ranking[0]
+		buf.Reset()
+		resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
+		vs.count++
+		err = binary.Write(buf, binary.LittleEndian, resp)
+		if err != nil {
+			return
+		}
+
+		_, err = w.Write(buf.Bytes())
+		if err != nil {
+			return
+		}
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -196,6 +231,7 @@ func (vs *ServerRest) Start() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/new_ballot", vs.newBallot)
 	mux.HandleFunc("/vote", vs.vote)
+	mux.HandleFunc("/result", vs.result)
 
 	s := &http.Server{
 		Addr:           vs.addr,

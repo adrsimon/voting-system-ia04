@@ -107,7 +107,7 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, a
 		fmt.Println("failed treating response")
 		return
 	}
-	fmt.Printf("new session started with id %d\n", result.BallotID)
+	fmt.Printf("new session started with id %s\n", result.BallotID)
 	return result.BallotID, nil
 }
 
@@ -171,8 +171,8 @@ func (ag Agent) GetResults(sessionID string) {
 		fmt.Println("failed unmarshalling")
 		return
 	}
-	fmt.Printf("the winner of the vote %d is %d ", sessionID, result.Winner)
+	fmt.Printf("the winner of the vote %s is %d\n", sessionID, result.Winner)
 	if len(result.Ranking) > 0 {
-		fmt.Printf("the ranking of the vote is '%v'", result.Ranking)
+		fmt.Printf("the ranking of the vote is %v", result.Ranking)
 	}
 }

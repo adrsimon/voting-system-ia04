@@ -1,33 +1,59 @@
 package main
 
 import (
+	"fmt"
 	"github.com/adrsimon/voting-system-ia04/agt"
 	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"golang.org/x/exp/rand"
 	"time"
 )
 
-func main() {
-	ag := agt.NewAgent("1", []comsoc.Alternative{1, 2, 3}, make(map[string][]int64))
-	ag2 := agt.NewAgent("2", []comsoc.Alternative{2, 1, 3}, make(map[string][]int64))
-	ag3 := agt.NewAgent("3", []comsoc.Alternative{1, 3, 2}, make(map[string][]int64))
-	voter := make([]agt.AgentID, 3)
-	voter[0] = "1"
-	voter[1] = "2"
-	voter[2] = "3"
-	tb := make([]int64, 3)
-	tb[0] = 1
-	tb[1] = 2
-	tb[2] = 3
+func randomPreferences(alts []comsoc.Alternative) []comsoc.Alternative {
+	availableAlternatives := make([]comsoc.Alternative, len(alts))
+	copy(availableAlternatives, alts)
+	randomizedAlts := make([]comsoc.Alternative, len(alts))
+	for i := 0; i < len(alts); i++ {
+		randomIndex := rand.Intn(len(availableAlternatives))
+		randomizedAlts[i] = availableAlternatives[randomIndex]
+		availableAlternatives = append(availableAlternatives[:randomIndex], availableAlternatives[randomIndex+1:]...)
+	}
+	return randomizedAlts
+}
 
-	ballotID, err := ag.StartSession("Majority", "2023-10-28T12:04:00+02:00", voter, 3, tb)
+func main() {
+	// on crée 5 alternatives
+	alts := make([]comsoc.Alternative, 5)
+	for i := 0; i < 5; i++ {
+		alts[i] = comsoc.Alternative(i)
+	}
+
+	// on crée 100 agents avec des préférences aléatoires
+	agents := make(map[agt.AgentID]agt.Agent, 100)
+	for i := 0; i < 100; i++ {
+		id := agt.AgentID(fmt.Sprintf("agent-%d", i))
+		agents[id] = *agt.NewAgent(id, randomPreferences(alts), make([]int64, 0))
+	}
+
+	// variables nécessaires à la création d'un vote
+	deadline := time.Now().Add(10 * time.Second).Format(time.RFC3339)
+	ids := make([]agt.AgentID, 0, len(agents))
+	for k := range agents {
+		ids = append(ids, k)
+	}
+
+	// on récupère le premier agent qui se chargera de créer les sessions et de récupérer les résultats
+	organizer := agents["agent-1"]
+	ballotID, err := organizer.StartSession("Majority", deadline, ids, int64(len(alts)), make([]int64, 0))
 	if err != nil {
 		return
 	}
 
-	go ag.Vote(ballotID)  // success
-	go ag2.Vote(ballotID) // failure
-	go ag3.Vote(ballotID)
-	time.Sleep(1 * time.Minute)
-	ag.GetResults(ballotID)
-	// TODO : cant vote two times
+	// on fait voter tous les agents
+	for _, ag := range agents {
+		ag.Vote(ballotID)
+	}
+
+	// on récupère les résultats
+	time.Sleep(15 * time.Second)
+	organizer.GetResults(ballotID)
 }

@@ -35,9 +35,6 @@ func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.
 func (ba *ballotAgent) removeVoter(agID AgentID) {
 	for i, v := range ba.voterID {
 		if v == agID {
-			a := ba.voterID[:i]
-			b := ba.voterID[i+1:]
-			fmt.Println(a, b)
 			ba.voterID = append(ba.voterID[:i], ba.voterID[i+1:]...)
 		}
 	}
@@ -77,7 +74,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ba := *newBallotAgent(fmt.Sprintf("ballot-%d", vs.count), nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
+	ballotID := fmt.Sprintf("ballot-%d", vs.count)
+	ba := *newBallotAgent(ballotID, nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
 	switch req.Rule {
 	case "Majority":
 		ba.rule = comsoc.SWFFactory(comsoc.MajoritySWF, comsoc.TieBreakFactory(tieB))
@@ -94,7 +92,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	vs.ballotAgents[ba.ballotID] = ba
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
-	resp, err := json.Marshal(NewBallotResponse{vs.count})
+	resp, err := json.Marshal(NewBallotResponse{ballotID})
 	vs.count++
 	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
@@ -150,7 +148,7 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 	ba.profile = append(ba.profile, req.Prefs)
 	ba.removeVoter(req.VoterID)
 	vs.ballotAgents[ba.ballotID] = ba
-	fmt.Printf("voter n°%s has voted for vote n°%d \n", req.VoterID, req.BallotID)
+	fmt.Printf("voter n°%s has voted for %s, with preferences %v \n", req.VoterID, req.BallotID, req.Prefs)
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -37,14 +37,28 @@ func isPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
 }
 
 func maxCount(count Count) (bestAlts []Alternative) {
-	max := 0
+	maximum := 0
 	for i, v := range count {
-		if v > max {
+		if v > maximum {
 			bestAlts = make([]Alternative, 0)
 			bestAlts = append(bestAlts, i)
-			max = v
-		} else if v == max {
+			maximum = v
+		} else if v == maximum {
 			bestAlts = append(bestAlts, i)
+		}
+	}
+	return
+}
+
+func minCount(count Count) (worstAlts []Alternative) {
+	minimum := 2 << 31
+	for i, v := range count {
+		if v < minimum {
+			worstAlts = make([]Alternative, 0)
+			worstAlts = append(worstAlts, i)
+			minimum = v
+		} else if v == minimum {
+			worstAlts = append(worstAlts, i)
 		}
 	}
 	return

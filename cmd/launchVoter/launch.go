@@ -47,7 +47,7 @@ func main() {
 	// on récupère le premier agent qui se chargera de créer les sessions et de récupérer les résultats
 	organizer := agents["agent-1"]
 	tb := alts
-	ballotID, err := organizer.StartSession("Borda", deadline, ids, int64(len(alts)), tb)
+	ballotID, err := organizer.StartSession("STV", deadline, ids, int64(len(alts)), tb)
 	if err != nil {
 		return
 	}

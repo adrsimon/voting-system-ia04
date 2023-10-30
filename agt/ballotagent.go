@@ -85,6 +85,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		ba.rule = comsoc.SCFFactory(comsoc.BordaSCF, comsoc.TieBreakFactory(tieB))
 	case "Approval":
 		ba.rule = comsoc.SCFFactory(comsoc.ApprovalSCF, comsoc.TieBreakFactory(tieB))
+	case "STV":
+		ba.rule = comsoc.SCFFactory(comsoc.STVSCF, comsoc.TieBreakFactory(tieB))
 	// AJOUTER COPELAND & STV
 	default:
 		w.WriteHeader(http.StatusBadRequest)

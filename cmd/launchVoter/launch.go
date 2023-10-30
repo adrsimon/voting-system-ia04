@@ -27,15 +27,18 @@ func main() {
 		alts[i] = comsoc.Alternative(i)
 	}
 
-	// on crée 100 agents avec des préférences aléatoires
-	agents := make(map[agt.AgentID]agt.Agent, 100)
-	for i := 0; i < 100; i++ {
+	nbVoters := 10
+	agents := make(map[agt.AgentID]agt.Agent, nbVoters)
+	for i := 0; i < nbVoters; i++ {
 		id := agt.AgentID(fmt.Sprintf("agent-%d", i))
-		agents[id] = *agt.NewAgent(id, randomPreferences(alts), make([]int64, 0))
+		threshold := make([]int64, 0)
+		threshold = append(threshold, int64(rand.Intn(len(alts)+1)))
+		agents[id] = *agt.NewAgent(id, randomPreferences(alts), threshold)
+
 	}
 
 	// variables nécessaires à la création d'un vote
-	deadline := time.Now().Add(10 * time.Second).Format(time.RFC3339)
+	deadline := time.Now().Add(3 * time.Second).Format(time.RFC3339)
 	ids := make([]agt.AgentID, 0, len(agents))
 	for k := range agents {
 		ids = append(ids, k)
@@ -43,7 +46,8 @@ func main() {
 
 	// on récupère le premier agent qui se chargera de créer les sessions et de récupérer les résultats
 	organizer := agents["agent-1"]
-	ballotID, err := organizer.StartSession("Majority", deadline, ids, int64(len(alts)), make([]int64, 0))
+	tb := alts
+	ballotID, err := organizer.StartSession("Borda", deadline, ids, int64(len(alts)), tb)
 	if err != nil {
 		return
 	}
@@ -54,6 +58,6 @@ func main() {
 	}
 
 	// on récupère les résultats
-	time.Sleep(15 * time.Second)
+	time.Sleep(5 * time.Second)
 	organizer.GetResults(ballotID)
 }

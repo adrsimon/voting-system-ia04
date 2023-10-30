@@ -76,7 +76,7 @@ func (ag Agent) TreatResponse(r *http.Response) (NewBallotResponse, error) {
 	return resp, nil
 }
 
-func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, alts int64, tieBreak []int64) (res string, err error) {
+func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, alts int64, tieBreak []comsoc.Alternative) (res string, err error) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/new_ballot", port)
 

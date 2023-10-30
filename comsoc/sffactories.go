@@ -10,70 +10,28 @@ func SWFFactory(swf func(p Profile) (Count, error), tiebreak func([]Alternative)
 		}
 		alts := make([]Alternative, 0)
 		for len(count) >= 1 {
-			max := maxCount(count)
-			for len(max) > 1 {
-				maxAlt, err := tiebreak(max)
+			maximum := maxCount(count)
+			for len(maximum) > 1 {
+				maxAlt, err := tiebreak(maximum)
 				if err != nil {
 					return nil, err
 				}
 				delete(count, maxAlt)
 				alts = append(alts, maxAlt)
-				idx := slices.Index(max, maxAlt)
-				max = append(max[:idx], max[idx+1:]...)
+				idx := slices.Index(maximum, maxAlt)
+				maximum = append(maximum[:idx], maximum[idx+1:]...)
 			}
-			alts = append(alts, max[0])
-			delete(count, max[0])
+			alts = append(alts, maximum[0])
+			delete(count, maximum[0])
 		}
 		return alts, nil
 	}
 	return f
 }
 
-func SCFFactory(scf func(p Profile) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile) (Alternative, error) {
-	f := func(profile Profile) (Alternative, error) {
-		alts, err := scf(profile)
-		if err != nil {
-			return Alternative(0), err
-		}
-		bestAlt, err := tiebreak(alts)
-		if err != nil {
-			return Alternative(0), err
-		}
-		return bestAlt, nil
-	}
-	return f
-}
-
-func SWFFactoryApproval(swf func(p Profile, thresholds []int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int64) ([]Alternative, error) {
-	f := func(profile Profile, thresholds []int64) ([]Alternative, error) {
-		count, err := swf(profile, thresholds)
-		if err != nil {
-			return nil, err
-		}
-		alts := make([]Alternative, 0)
-		for len(count) >= 1 {
-			max := maxCount(count)
-			for len(max) > 1 {
-				maxAlt, err := tiebreak(max)
-				if err != nil {
-					return nil, err
-				}
-				delete(count, maxAlt)
-				alts = append(alts, maxAlt)
-				idx := slices.Index(max, maxAlt)
-				max = append(max[:idx], max[idx+1:]...)
-			}
-			alts = append(alts, max[0])
-			delete(count, max[0])
-		}
-		return alts, nil
-	}
-	return f
-}
-
-func SCFFactoryApproval(scf func(p Profile, thresholds []int64) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int64) (Alternative, error) {
-	f := func(profile Profile, thresholds []int64) (Alternative, error) {
-		alts, err := scf(profile, thresholds)
+func SCFFactory(scf func(p Profile, thresholds ...int64) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) (Alternative, error) {
+	f := func(profile Profile, thresholds ...int64) (Alternative, error) {
+		alts, err := scf(profile, thresholds...)
 		if err != nil {
 			return Alternative(0), err
 		}

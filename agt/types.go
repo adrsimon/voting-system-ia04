@@ -32,22 +32,21 @@ type ServerRest struct {
 }
 
 type NewBallotRequest struct {
-	Rule     string    `json:"rule"`
-	Deadline string    `json:"deadline"`
-	VoterIds []AgentID `json:"voter-ids"`
-	Alts     int64     `json:"#alts"`
-	TieBreak []int64   `json:"tie-break"`
+	Rule     string               `json:"rule"`
+	Deadline string               `json:"deadline"`
+	VoterIds []AgentID            `json:"voter-ids"`
+	Alts     int64                `json:"#alts"`
+	TieBreak []comsoc.Alternative `json:"tie-break"`
 }
 
 type ballotAgent struct {
 	ballotID   string
-	rule       func(profile comsoc.Profile) ([]comsoc.Alternative, error)
-	ruleApp    func(profile comsoc.Profile, thresholds []int64) ([]comsoc.Alternative, error)
+	rule       func(comsoc.Profile, ...int64) (comsoc.Alternative, error)
 	deadline   time.Time
 	voterID    []AgentID
 	profile    comsoc.Profile
 	nbrAlt     int64
-	tiebreak   []int64
+	tiebreak   []comsoc.Alternative
 	thresholds []int64
 }
 

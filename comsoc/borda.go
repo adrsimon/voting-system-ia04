@@ -10,7 +10,7 @@ func BordaSWF(p Profile) (count Count, err error) {
 	return count, nil
 }
 
-func BordaSCF(p Profile) (bestAlts []Alternative, err error) {
+func BordaSCF(p Profile, _ ...int64) (bestAlts []Alternative, err error) {
 	count, err := BordaSWF(p)
 	return maxCount(count), err
 }

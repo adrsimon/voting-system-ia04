@@ -16,8 +16,8 @@ func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]ballotAgent), count: 0}
 }
 
-func newBallotAgent(ballotID string, rule func(profile comsoc.Profile) ([]comsoc.Alternative, error), ruleApp func(profile comsoc.Profile, thresholds []int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64, thresholds []int64) *ballotAgent {
-	return &ballotAgent{ballotID: ballotID, rule: rule, ruleApp: ruleApp, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
+func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) (comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
+	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
 }
 
 func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.Request) bool {
@@ -65,6 +65,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
 	tieB := make([]comsoc.Alternative, 0)
 	if req.TieBreak == nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -75,14 +76,15 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ballotID := fmt.Sprintf("ballot-%d", vs.count)
-	ba := *newBallotAgent(ballotID, nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
+	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
+
 	switch req.Rule {
 	case "Majority":
-		ba.rule = comsoc.SWFFactory(comsoc.MajoritySWF, comsoc.TieBreakFactory(tieB))
+		ba.rule = comsoc.SCFFactory(comsoc.MajoritySCF, comsoc.TieBreakFactory(tieB))
 	case "Borda":
-		ba.rule = comsoc.SWFFactory(comsoc.BordaSWF, comsoc.TieBreakFactory(tieB))
+		ba.rule = comsoc.SCFFactory(comsoc.BordaSCF, comsoc.TieBreakFactory(tieB))
 	case "Approval":
-		ba.ruleApp = comsoc.SWFFactoryApproval(comsoc.ApprovalSWF, comsoc.TieBreakFactory(tieB))
+		ba.rule = comsoc.SCFFactory(comsoc.ApprovalSCF, comsoc.TieBreakFactory(tieB))
 	// AJOUTER COPELAND & STV
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -93,7 +95,6 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
 	resp, err := json.Marshal(NewBallotResponse{ballotID})
-	vs.count++
 	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
 		return
@@ -146,9 +147,10 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ba.profile = append(ba.profile, req.Prefs)
+	ba.thresholds = append(ba.thresholds, req.Options...)
 	ba.removeVoter(req.VoterID)
 	vs.ballotAgents[ba.ballotID] = ba
-	fmt.Printf("voter n°%s has voted for %s, with preferences %v \n", req.VoterID, req.BallotID, req.Prefs)
+	fmt.Printf("%s has voted for %s, with preferences %v, and approval threshold %v \n", req.VoterID, req.BallotID, req.Prefs, req.Options)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -188,44 +190,25 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTooEarly)
 		return
 	}
-	if ba.rule != nil {
-		ranking, err := ba.rule(ba.profile)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		winner := ranking[0]
-		buf.Reset()
-		resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
-		vs.count++
-		err = binary.Write(buf, binary.LittleEndian, resp)
-		if err != nil {
-			return
-		}
 
-		_, err = w.Write(buf.Bytes())
-		if err != nil {
-			return
-		}
-	} else {
-		ranking, err := ba.ruleApp(ba.profile, ba.thresholds)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		winner := ranking[0]
-		buf.Reset()
-		resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
-		vs.count++
-		err = binary.Write(buf, binary.LittleEndian, resp)
-		if err != nil {
-			return
-		}
-
-		_, err = w.Write(buf.Bytes())
-		if err != nil {
-			return
-		}
+	winner, err := ba.rule(ba.profile, ba.thresholds...)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
 	}
-	w.WriteHeader(http.StatusOK)
+
+	buf.Reset()
+	resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: nil})
+	vs.count++
+	err = binary.Write(buf, binary.LittleEndian, resp)
+	if err != nil {
+		return
+	}
+
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		return
+	}
 }
 
 func (vs *ServerRest) Start() {

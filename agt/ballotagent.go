@@ -13,17 +13,20 @@ import (
 )
 
 func NewServerRest(addr string) *ServerRest {
-	return &ServerRest{id: addr, addr: addr, ballotAgents: make([]ballotAgent, 0), count: 0}
+	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]ballotAgent), count: 0}
 }
 
-func newBallotAgent(ballotID int64, rule func(profile comsoc.Profile) ([]comsoc.Alternative, error), ruleApp func(profile comsoc.Profile, tresholds []int) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64, thresholds []int) *ballotAgent {
+func newBallotAgent(ballotID string, rule func(profile comsoc.Profile) ([]comsoc.Alternative, error), ruleApp func(profile comsoc.Profile, thresholds []int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []int64, thresholds []int64) *ballotAgent {
 	return &ballotAgent{ballotID: ballotID, rule: rule, ruleApp: ruleApp, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
 }
 
 func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.Request) bool {
 	if r.Method != method {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Fprintf(w, "method %q not allowed", r.Method)
+		_, err := fmt.Fprintf(w, "method %q not allowed", r.Method)
+		if err != nil {
+			return false
+		}
 		return false
 	}
 	return true
@@ -74,7 +77,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ba := *newBallotAgent(vs.count, nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int, 0))
+	ba := *newBallotAgent(fmt.Sprintf("ballot-%d", vs.count), nil, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
 	switch req.Rule {
 	case "Majority":
 		ba.rule = comsoc.SWFFactory(comsoc.MajoritySWF, comsoc.TieBreakFactory(tieB))
@@ -88,7 +91,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)
-	vs.ballotAgents = append(vs.ballotAgents, ba)
+	vs.ballotAgents[ba.ballotID] = ba
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
 	resp, err := json.Marshal(NewBallotResponse{vs.count})
@@ -125,14 +128,14 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ba := ballotAgent{}
-	ba.ballotID = -1
+	ba.ballotID = ""
 	for _, b := range vs.ballotAgents {
 		if b.ballotID == req.BallotID {
 			ba = b
 		}
 	}
 
-	if ba.ballotID == -1 { // pas de ballotID => 400
+	if ba.ballotID == "" { // pas de ballotID => 400
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -172,18 +175,18 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ba := ballotAgent{}
-	ba.ballotID = -1
+	ba.ballotID = ""
 	for _, b := range vs.ballotAgents {
 		if b.ballotID == req.BallotID {
 			ba = b
 		}
 	}
 
-	if ba.ballotID == -1 { // pas de ballotID => 404
+	if ba.ballotID == "" { // pas de ballotID => 404
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	if ba.deadline.After(time.Now()) { // deadline dépassée => 503
+	if ba.deadline.After(time.Now()) { // résultats pas disponibles => 425
 		w.WriteHeader(http.StatusTooEarly)
 		return
 	}

@@ -44,8 +44,8 @@ func SCFFactory(scf func(p Profile) ([]Alternative, error), tiebreak func([]Alte
 	return f
 }
 
-func SWFFactoryApproval(swf func(p Profile, thresholds []int) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int) ([]Alternative, error) {
-	f := func(profile Profile, thresholds []int) ([]Alternative, error) {
+func SWFFactoryApproval(swf func(p Profile, thresholds []int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int64) ([]Alternative, error) {
+	f := func(profile Profile, thresholds []int64) ([]Alternative, error) {
 		count, err := swf(profile, thresholds)
 		if err != nil {
 			return nil, err
@@ -71,8 +71,8 @@ func SWFFactoryApproval(swf func(p Profile, thresholds []int) (Count, error), ti
 	return f
 }
 
-func SCFFactoryApproval(scf func(p Profile, thresholds []int) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int) (Alternative, error) {
-	f := func(profile Profile, thresholds []int) (Alternative, error) {
+func SCFFactoryApproval(scf func(p Profile, thresholds []int64) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, []int64) (Alternative, error) {
+	f := func(profile Profile, thresholds []int64) (Alternative, error) {
 		alts, err := scf(profile, thresholds)
 		if err != nil {
 			return Alternative(0), err

@@ -10,7 +10,7 @@ import (
 	comsoc "github.com/adrsimon/voting-system-ia04/comsoc"
 )
 
-func NewAgent(id AgentID, prefs []comsoc.Alternative, opts map[string][]int64) *Agent {
+func NewAgent(id AgentID, prefs []comsoc.Alternative, opts []int64) *Agent {
 	return &Agent{id, prefs, opts}
 }
 
@@ -76,7 +76,7 @@ func (ag Agent) TreatResponse(r *http.Response) (NewBallotResponse, error) {
 	return resp, nil
 }
 
-func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, alts int64, tieBreak []int64) (res int64, err error) {
+func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, alts int64, tieBreak []int64) (res string, err error) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/new_ballot", port)
 
@@ -111,7 +111,7 @@ func (ag Agent) StartSession(rule string, deadline string, voterIds []AgentID, a
 	return result.BallotID, nil
 }
 
-func (ag Agent) Vote(sessionID int64) {
+func (ag Agent) Vote(sessionID string) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/vote", port)
 
@@ -139,7 +139,7 @@ func (ag Agent) Vote(sessionID int64) {
 	return
 }
 
-func (ag Agent) GetResults(sessionID int64) {
+func (ag Agent) GetResults(sessionID string) {
 	port := 8080
 	requestURL := fmt.Sprintf("http://localhost:%d/result", port)
 

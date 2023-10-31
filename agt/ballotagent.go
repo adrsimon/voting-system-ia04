@@ -71,7 +71,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		for _, v := range req.TieBreak {
-			tieB = append(tieB, comsoc.Alternative(v))
+			tieB = append(tieB, v)
 		}
 	}
 
@@ -79,16 +79,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
 
 	switch req.Rule {
-	case "Majority":
-		ba.rule = comsoc.SCFFactory(comsoc.MajoritySCF, comsoc.TieBreakFactory(tieB))
-	case "Borda":
-		ba.rule = comsoc.SCFFactory(comsoc.BordaSCF, comsoc.TieBreakFactory(tieB))
-	case "Approval":
-		ba.rule = comsoc.SCFFactory(comsoc.ApprovalSCF, comsoc.TieBreakFactory(tieB))
-	case "STV":
-		ba.rule = comsoc.SCFFactory(comsoc.STVSCF, comsoc.TieBreakFactory(tieB))
-	case "Copeland":
-		ba.rule = comsoc.SCFFactory(comsoc.CopelandSCF, comsoc.TieBreakFactory(tieB))
+	case "majority", "borda", "approval", "stv", "copeland":
+		ba.rule = comsoc.SCFFactory(SCFMap[req.Rule], comsoc.TieBreakFactory(tieB))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -214,11 +206,41 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (vs *ServerRest) methods(w http.ResponseWriter, r *http.Request) {
+	if !vs.checkMethod("GET", w, r) {
+		return
+	}
+
+	vs.Lock()
+	defer vs.Unlock()
+
+	methods := make([]string, 0)
+	for v := range SCFMap {
+		methods = append(methods, v)
+	}
+
+	buf := new(bytes.Buffer)
+	resp, err := json.Marshal(MethodsResponse{methods})
+	if err != nil {
+		return
+	}
+	err = binary.Write(buf, binary.LittleEndian, resp)
+	if err != nil {
+		return
+	}
+
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		return
+	}
+}
+
 func (vs *ServerRest) Start() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/new_ballot", vs.newBallot)
 	mux.HandleFunc("/vote", vs.vote)
 	mux.HandleFunc("/result", vs.result)
+	mux.HandleFunc("/methods", vs.methods)
 
 	s := &http.Server{
 		Addr:           vs.addr,

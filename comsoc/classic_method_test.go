@@ -86,7 +86,7 @@ func TestApprovalSWF(t *testing.T) {
 		{1, 3, 2},
 		{2, 3, 1},
 	}
-	thresholds := []int{2, 1, 2}
+	thresholds := []int64{2, 1, 2}
 
 	res, _ := ApprovalSWF(prefs, thresholds)
 
@@ -107,9 +107,9 @@ func TestApprovalSCF(t *testing.T) {
 		{1, 2, 3},
 		{2, 1, 3},
 	}
-	thresholds := []int{2, 1, 2}
+	thresholds := []int64{2, 1, 2}
 
-	res, err := ApprovalSCF(prefs, thresholds)
+	res, err := ApprovalSCF(prefs, thresholds...)
 
 	if err != nil {
 		t.Error(err)

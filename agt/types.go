@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+var SCFMap = map[string]func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error){
+	"majority": comsoc.MajoritySCF,
+	"borda":    comsoc.BordaSCF,
+	"approval": comsoc.ApprovalSCF,
+	"stv":      comsoc.STVSCF,
+	"copeland": comsoc.CopelandSCF,
+}
+
 type AgentID string
 
 type Agent struct {
@@ -68,4 +76,8 @@ type ResultRequest struct {
 type ResultResponse struct {
 	Winner  comsoc.Alternative   `json:"winner"`
 	Ranking []comsoc.Alternative `json:"ranking,omitempty"`
+}
+
+type MethodsResponse struct {
+	Methods []string `json:"methods"`
 }

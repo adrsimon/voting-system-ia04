@@ -13,7 +13,7 @@ import (
 )
 
 func NewServerRest(addr string) *ServerRest {
-	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]ballotAgent), count: 0}
+	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]*ballotAgent), count: 0}
 }
 
 func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) (comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
@@ -39,14 +39,27 @@ func (ba *ballotAgent) removeVoter(agID AgentID) {
 		}
 	}
 }
+func (ba *ballotAgent) vote(req VoteRequest, c chan int) {
+	ba.Lock()
+	defer ba.Unlock()
+	if ba.deadline.Before(time.Now()) { // deadline dépassée => 503
+		c <- http.StatusServiceUnavailable
+		return
+	} else if !slices.Contains(ba.voterID, req.VoterID) { // pas autorisé à voter => 403
+		c <- http.StatusForbidden
+		return
+	} else {
+		ba.profile = append(ba.profile, req.Prefs)
+		ba.thresholds = append(ba.thresholds, req.Options...)
+		ba.removeVoter(req.VoterID)
+		c <- http.StatusOK
+	}
+}
 
 func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	if !vs.checkMethod("POST", w, r) {
 		return
 	}
-
-	vs.Lock()
-	defer vs.Unlock()
 
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
@@ -74,7 +87,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 			tieB = append(tieB, v)
 		}
 	}
-
+	vs.Lock()
+	defer vs.Unlock()
 	ballotID := fmt.Sprintf("ballot-%d", vs.count)
 	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
 
@@ -86,7 +100,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)
-	vs.ballotAgents[ba.ballotID] = ba
+	vs.ballotAgents[ba.ballotID] = &ba
+	vs.count++
 	w.WriteHeader(http.StatusOK)
 	buf.Reset()
 	resp, err := json.Marshal(NewBallotResponse{ballotID})
@@ -106,9 +121,6 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vs.Lock()
-	defer vs.Unlock()
-
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
@@ -120,42 +132,33 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-
-	ba := ballotAgent{}
-	ba.ballotID = ""
-	for _, b := range vs.ballotAgents {
+	ballotIndex := ""
+	for i, b := range vs.ballotAgents {
 		if b.ballotID == req.BallotID {
-			ba = b
+			ballotIndex = i
 		}
 	}
 
-	if ba.ballotID == "" { // pas de ballotID => 400
+	if ballotIndex == "" { // ballot not existing => 400
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if ba.deadline.Before(time.Now()) { // deadline dépassée => 503
-		w.WriteHeader(http.StatusServiceUnavailable)
+	c := make(chan int)
+	go vs.ballotAgents[ballotIndex].vote(req, c)
+	val := <-c
+	if val != http.StatusOK {
+		w.WriteHeader(val)
 		return
+	} else {
+		w.WriteHeader(val)
+		fmt.Printf("%s has voted for %s, with preferences %v, and approval threshold %v \n", req.VoterID, req.BallotID, req.Prefs, req.Options)
 	}
-	if !slices.Contains(ba.voterID, req.VoterID) { // pas autorisé à voter => 403
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-	ba.profile = append(ba.profile, req.Prefs)
-	ba.thresholds = append(ba.thresholds, req.Options...)
-	ba.removeVoter(req.VoterID)
-	vs.ballotAgents[ba.ballotID] = ba
-	fmt.Printf("%s has voted for %s, with preferences %v, and approval threshold %v \n", req.VoterID, req.BallotID, req.Prefs, req.Options)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 	if !vs.checkMethod("POST", w, r) {
 		return
 	}
-
-	vs.Lock()
-	defer vs.Unlock()
 
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
@@ -173,7 +176,7 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 	ba.ballotID = ""
 	for _, b := range vs.ballotAgents {
 		if b.ballotID == req.BallotID {
-			ba = b
+			ba = *b
 		}
 	}
 
@@ -194,7 +197,6 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 
 	buf.Reset()
 	resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: nil})
-	vs.count++
 	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
 		return

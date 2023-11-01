@@ -35,7 +35,7 @@ type ServerRest struct {
 	sync.Mutex
 	id           string
 	addr         string
-	ballotAgents map[string]ballotAgent
+	ballotAgents map[string]*ballotAgent
 	count        int64
 }
 
@@ -48,6 +48,7 @@ type NewBallotRequest struct {
 }
 
 type ballotAgent struct {
+	sync.Mutex
 	ballotID   string
 	rule       func(comsoc.Profile, ...int64) (comsoc.Alternative, error)
 	deadline   time.Time

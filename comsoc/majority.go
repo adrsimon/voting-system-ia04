@@ -1,6 +1,6 @@
 package comsoc
 
-func MajoritySWF(p Profile) (count Count, err error) {
+func MajoritySWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
 	for _, v := range p {
 		count[v[0]]++

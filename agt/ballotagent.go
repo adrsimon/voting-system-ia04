@@ -16,7 +16,7 @@ func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]*ballotAgent), count: 0}
 }
 
-func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) (comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
+func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
 	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
 }
 
@@ -94,7 +94,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 
 	switch req.Rule {
 	case "majority", "borda", "approval", "stv", "copeland":
-		ba.rule = comsoc.SCFFactory(SCFMap[req.Rule], comsoc.TieBreakFactory(tieB))
+		ba.rule = comsoc.SWFFactory(SWFMap[req.Rule], comsoc.TieBreakFactory(tieB))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -189,14 +189,15 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	winner, err := ba.rule(ba.profile, ba.thresholds...)
+	ranking, err := ba.rule(ba.profile, ba.thresholds...)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 	}
+	winner := ranking[0]
 
 	buf.Reset()
-	resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: nil})
+	resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
 	err = binary.Write(buf, binary.LittleEndian, resp)
 	if err != nil {
 		return
@@ -217,7 +218,7 @@ func (vs *ServerRest) methods(w http.ResponseWriter, r *http.Request) {
 	defer vs.Unlock()
 
 	methods := make([]string, 0)
-	for v := range SCFMap {
+	for v := range SWFMap {
 		methods = append(methods, v)
 	}
 

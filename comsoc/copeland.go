@@ -1,6 +1,6 @@
 package comsoc
 
-func CopelandSWF(p Profile) (count Count, err error) {
+func CopelandSWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
 	for _, v := range p {
 		for i := 0; i < len(v); i++ {

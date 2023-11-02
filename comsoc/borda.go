@@ -1,6 +1,6 @@
 package comsoc
 
-func BordaSWF(p Profile) (count Count, err error) {
+func BordaSWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
 	for _, v := range p {
 		for j, w := range v {

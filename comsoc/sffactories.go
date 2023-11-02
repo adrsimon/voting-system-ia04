@@ -2,9 +2,9 @@ package comsoc
 
 import "golang.org/x/exp/slices"
 
-func SWFFactory(swf func(p Profile) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile) ([]Alternative, error) {
-	f := func(profile Profile) ([]Alternative, error) {
-		count, err := swf(profile)
+func SWFFactory(swf func(p Profile, thresholds ...int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) ([]Alternative, error) {
+	f := func(profile Profile, thresholds ...int64) ([]Alternative, error) {
+		count, err := swf(profile, thresholds...)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,6 @@
 package comsoc
 
-func STVSWF(p Profile) (count Count, err error) {
+func STVSWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
 	for _, v := range p {
 		count[v[0]]++

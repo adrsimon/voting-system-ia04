@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-var SCFMap = map[string]func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error){
-	"majority": comsoc.MajoritySCF,
-	"borda":    comsoc.BordaSCF,
-	"approval": comsoc.ApprovalSCF,
-	"stv":      comsoc.STVSCF,
-	"copeland": comsoc.CopelandSCF,
+var SWFMap = map[string]func(comsoc.Profile, ...int64) (comsoc.Count, error){
+	"majority": comsoc.MajoritySWF,
+	"borda":    comsoc.BordaSWF,
+	"approval": comsoc.ApprovalSWF,
+	"stv":      comsoc.STVSWF,
+	"copeland": comsoc.CopelandSWF,
 }
 
 type AgentID string
@@ -50,7 +50,7 @@ type NewBallotRequest struct {
 type ballotAgent struct {
 	sync.Mutex
 	ballotID   string
-	rule       func(comsoc.Profile, ...int64) (comsoc.Alternative, error)
+	rule       func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error)
 	deadline   time.Time
 	voterID    []AgentID
 	profile    comsoc.Profile

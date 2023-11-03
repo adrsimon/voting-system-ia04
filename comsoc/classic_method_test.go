@@ -88,7 +88,7 @@ func TestApprovalSWF(t *testing.T) {
 	}
 	thresholds := []int64{2, 1, 2}
 
-	res, _ := ApprovalSWF(prefs, thresholds)
+	res, _ := ApprovalSWF(prefs, thresholds...)
 
 	if res[1] != 2 {
 		t.Errorf("error, result for 1 should be 2, %d computed", res[1])

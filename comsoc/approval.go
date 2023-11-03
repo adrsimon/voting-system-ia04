@@ -15,5 +15,5 @@ func ApprovalSWF(p Profile, thresholds ...int64) (count Count, err error) {
 
 func ApprovalSCF(p Profile, thresholds ...int64) (bestAlts []Alternative, err error) {
 	count, err := ApprovalSWF(p, thresholds...)
-	return maxCount(count), err
+	return MaxCount(count), err
 }

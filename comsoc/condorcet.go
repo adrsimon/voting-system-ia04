@@ -7,7 +7,7 @@ func CondorcetWinner(p Profile) (bestAlts []Alternative, err error) {
 		winner := true
 		for _, v2 := range p[0] {
 			if v != v2 {
-				check, err := isPrefProfil(v, v2, p)
+				check, err := IsPrefProfil(v, v2, p)
 				if err != nil {
 					return bestAlts, err
 				}

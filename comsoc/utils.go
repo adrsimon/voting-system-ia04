@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-func rank(alt Alternative, prefs []Alternative) int {
+func Rank(alt Alternative, prefs []Alternative) int {
 	for i, v := range prefs {
 		if alt == v {
 			return i
@@ -14,14 +14,14 @@ func rank(alt Alternative, prefs []Alternative) int {
 	return -1
 }
 
-func isPref(alt1, alt2 Alternative, prefs []Alternative) bool {
-	return rank(alt1, prefs) < rank(alt2, prefs)
+func IsPref(alt1, alt2 Alternative, prefs []Alternative) bool {
+	return Rank(alt1, prefs) < Rank(alt2, prefs)
 }
 
-func isPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
+func IsPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
 	count := 0
 	for _, alts := range p {
-		if isPref(alt1, alt2, alts) {
+		if IsPref(alt1, alt2, alts) {
 			count++
 		} else {
 			count--
@@ -36,7 +36,7 @@ func isPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
 	}
 }
 
-func maxCount(count Count) (bestAlts []Alternative) {
+func MaxCount(count Count) (bestAlts []Alternative) {
 	maximum := 0
 	for i, v := range count {
 		if v > maximum {
@@ -50,7 +50,7 @@ func maxCount(count Count) (bestAlts []Alternative) {
 	return
 }
 
-func minCount(count Count) (worstAlts []Alternative) {
+func MinCount(count Count) (worstAlts []Alternative) {
 	minimum := 2 << 31
 	for i, v := range count {
 		if v < minimum {
@@ -64,7 +64,7 @@ func minCount(count Count) (worstAlts []Alternative) {
 	return
 }
 
-func checkProfile(prefs []Alternative, alts []Alternative) error {
+func CheckProfile(prefs []Alternative, alts []Alternative) error {
 	if len(prefs) != len(alts) {
 		return errors.New("alts and prefs doesn't have the same size")
 	}
@@ -83,9 +83,9 @@ func checkProfile(prefs []Alternative, alts []Alternative) error {
 	return nil
 }
 
-func checkProfileAlternative(prefs Profile, alts []Alternative) error {
+func CheckProfileAlternative(prefs Profile, alts []Alternative) error {
 	for _, v := range prefs {
-		err := checkProfile(v, alts)
+		err := CheckProfile(v, alts)
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ func checkProfileAlternative(prefs Profile, alts []Alternative) error {
 	return nil
 }
 
-func checkSubProfile(prefs []Alternative, alts []Alternative) error {
+func CheckSubProfile(prefs []Alternative, alts []Alternative) error {
 	if len(prefs) > len(alts) {
 		return errors.New("prefs isn't a subset of alts")
 	}

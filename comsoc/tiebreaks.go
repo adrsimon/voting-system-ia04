@@ -6,12 +6,12 @@ import (
 )
 
 // TODO : quand appel a cette fonction, il faut check la composition d'orderedAlts
-func TieBreakFactory(orderedAlts []Alternative) (func ([]Alternative) (Alternative, error)) {
-	f := func (alts []Alternative) (Alternative, error) {
+func TieBreakFactory(orderedAlts []Alternative) func([]Alternative) (Alternative, error) {
+	f := func(alts []Alternative) (Alternative, error) {
 		if len(alts) == 0 {
 			return Alternative(0), errors.New("no alts to check")
 		}
-		err := checkSubProfile(alts, orderedAlts)
+		err := CheckSubProfile(alts, orderedAlts)
 		if err != nil {
 			return Alternative(0), err
 		}

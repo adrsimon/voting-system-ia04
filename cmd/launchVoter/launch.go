@@ -37,8 +37,15 @@ func main() {
 
 	}
 
+	badVoterId := agt.AgentID("agent-11")
+	threshold := make([]int64, 0)
+	threshold = append(threshold, int64(rand.Intn(len(alts)+1)))
+	badPreferences := make([]comsoc.Alternative, 0)
+	badPreferences = append(badPreferences, comsoc.Alternative(12))
+	agents[badVoterId] = *agt.NewAgent(badVoterId, badPreferences, threshold)
+
 	// variables nécessaires à la création d'un vote
-	deadline := time.Now().Add(3 * time.Second).Format(time.RFC3339)
+	deadline := time.Now().Add(5 * time.Second).Format(time.RFC3339)
 	ids := make([]agt.AgentID, 0, len(agents))
 	for k := range agents {
 		ids = append(ids, k)
@@ -58,6 +65,6 @@ func main() {
 	}
 
 	// on récupère les résultats
-	time.Sleep(5 * time.Second)
+	time.Sleep(7 * time.Second)
 	organizer.GetResults(ballotID)
 }

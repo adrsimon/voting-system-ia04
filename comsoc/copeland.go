@@ -6,7 +6,7 @@ func CopelandSWF(p Profile, _ ...int64) (count Count, err error) {
 		for i := 0; i < len(v); i++ {
 			for j := i + 1; j < len(v); j++ {
 				if v[i] != v[j] {
-					if isPref(v[i], v[j], v) {
+					if IsPref(v[i], v[j], v) {
 						count[v[i]]++
 					} else {
 						count[v[j]]++
@@ -20,5 +20,5 @@ func CopelandSWF(p Profile, _ ...int64) (count Count, err error) {
 
 func CopelandSCF(p Profile, _ ...int64) (bestAlts []Alternative, err error) {
 	count, err := CopelandSWF(p)
-	return maxCount(count), err
+	return MaxCount(count), err
 }

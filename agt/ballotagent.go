@@ -16,8 +16,8 @@ func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]*ballotAgent), count: 0}
 }
 
-func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, nbrAlt int64, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
-	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, nbrAlt: nbrAlt, tiebreak: tiebreak, thresholds: thresholds}
+func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, alts []comsoc.Alternative, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
+	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, alternatives: alts, tiebreak: tiebreak, thresholds: thresholds}
 }
 
 func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.Request) bool {
@@ -47,6 +47,9 @@ func (ba *ballotAgent) vote(req VoteRequest, c chan int) {
 		return
 	} else if !slices.Contains(ba.voterID, req.VoterID) { // pas autorisé à voter => 403
 		c <- http.StatusForbidden
+		return
+	} else if comsoc.CheckProfile(req.Prefs, ba.alternatives) != nil {
+		c <- http.StatusBadRequest
 		return
 	} else {
 		ba.profile = append(ba.profile, req.Prefs)
@@ -90,13 +93,17 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	vs.Lock()
 	defer vs.Unlock()
 	ballotID := fmt.Sprintf("ballot-%d", vs.count)
-	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), req.Alts, req.TieBreak, make([]int64, 0))
+	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), make([]comsoc.Alternative, 0), req.TieBreak, make([]int64, 0))
 
 	switch req.Rule {
 	case "majority", "borda", "approval", "stv", "copeland":
 		ba.rule = comsoc.SWFFactory(SWFMap[req.Rule], comsoc.TieBreakFactory(tieB))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	for i := int64(0); i < req.Alts; i++ {
+		ba.alternatives = append(ba.alternatives, comsoc.Alternative(i))
 	}
 
 	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)

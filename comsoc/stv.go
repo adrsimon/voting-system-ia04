@@ -16,12 +16,12 @@ func STVSCF(p Profile, _ ...int64) (bestAlts []Alternative, err error) {
 		}
 
 		if len(count) == 1 {
-			return maxCount(count), nil
+			return MaxCount(count), nil
 		}
 
-		worstAlts := minCount(count)
+		worstAlts := MinCount(count)
 		if len(worstAlts) == len(count) || len(worstAlts) == 0 {
-			return maxCount(count), nil
+			return MaxCount(count), nil
 		}
 
 		for _, worstAlt := range worstAlts {

@@ -10,7 +10,7 @@ func SWFFactory(swf func(p Profile, thresholds ...int64) (Count, error), tiebrea
 		}
 		alts := make([]Alternative, 0)
 		for len(count) >= 1 {
-			maximum := maxCount(count)
+			maximum := MaxCount(count)
 			for len(maximum) > 1 {
 				maxAlt, err := tiebreak(maximum)
 				if err != nil {

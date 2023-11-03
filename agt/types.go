@@ -49,14 +49,14 @@ type NewBallotRequest struct {
 
 type ballotAgent struct {
 	sync.Mutex
-	ballotID   string
-	rule       func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error)
-	deadline   time.Time
-	voterID    []AgentID
-	profile    comsoc.Profile
-	nbrAlt     int64
-	tiebreak   []comsoc.Alternative
-	thresholds []int64
+	ballotID     string
+	rule         func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error)
+	deadline     time.Time
+	voterID      []AgentID
+	profile      comsoc.Profile
+	alternatives []comsoc.Alternative
+	tiebreak     []comsoc.Alternative
+	thresholds   []int64
 }
 
 type VoteRequest struct {

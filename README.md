@@ -20,13 +20,16 @@ Le but de ce TD est d'implémenter du bureau de vote. Les méthodes de vote impl
 
 Si vous souhaitez lancer des votes en local via un script go, utilisez la commande `go run cmd/launchBallot/launch.go`.
 
-
 ### Méthodes de vote implémentées
 Vote par majorité, vote de Borda, vote par approbation, vote simple transférable, vote de Copeland.
 
 ### Details d'implémentation
 
-.....
+- new_ballot génère automatiquement les alternatives disponibles à partir du nombre d'alternatives envoyées, dans le but de minimiser les erreurs. Elles sont numérotées de `0` à `#alts-1`
+- Les ID des ballots sont générés à partir d'un compteur global géré au niveau du serveur, permettant d'avoir des ballots uniques.
+<br><br>
+- Afin d'avoir une seule fonction de factory, efficace et fonctionnelle pour toutes les méthodes de vote, nous avons ajouté un argument optionel aux méthodes, permettant pour celles le nécessitant d'envoyer un tableau d'entier afin de préciser une fonction de tiebreak pour stv, ou un seuil d'approbation pour approval.
+- Les personnes qui créent les votes, et votent, sont tous des voteragent.
 
 ### API Map
 

@@ -5,7 +5,6 @@ import (
 	"slices"
 )
 
-// TODO : quand appel a cette fonction, il faut check la composition d'orderedAlts
 func TieBreakFactory(orderedAlts []Alternative) func([]Alternative) (Alternative, error) {
 	f := func(alts []Alternative) (Alternative, error) {
 		if len(alts) == 0 {

@@ -39,20 +39,20 @@ func (ba *ballotAgent) removeVoter(agID AgentID) {
 		}
 	}
 }
+
 func (ba *ballotAgent) vote(req VoteRequest, c chan int) {
 	ba.Lock()
 	defer ba.Unlock()
-	if ba.deadline.Before(time.Now()) { // deadline dépassée => 503
+	if ba.deadline.Before(time.Now()) { // missed deadline => 503
 		c <- http.StatusServiceUnavailable
 		return
-	} else if !slices.Contains(ba.voterID, req.VoterID) { // pas autorisé à voter => 403
+	} else if !slices.Contains(ba.voterID, req.VoterID) { // unauthorized => 403
 		c <- http.StatusForbidden
 		return
-	} else if comsoc.CheckProfile(req.Prefs, ba.alternatives) != nil {
+	} else if comsoc.CheckProfile(req.Prefs, ba.alternatives) != nil { // bad vote => 400
 		c <- http.StatusBadRequest
 		return
-	} else if ba.rulename == "approval" && len(req.Options) == 1 && req.Options[0] > 0 && req.Options[0] <= int64(len(ba.alternatives)) {
-		// checking right approval threshold
+	} else if ba.rulename == "approval" && len(req.Options) == 1 && req.Options[0] > 0 && req.Options[0] <= int64(len(ba.alternatives)) { // missing option => 400
 		c <- http.StatusBadRequest
 		return
 	} else {
@@ -71,6 +71,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -78,36 +79,47 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(buf.Bytes(), &req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	//faire verif request good
 	end, err := time.Parse(time.RFC3339, req.Deadline)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	vs.Lock()
+	defer vs.Unlock()
+	ballotID := fmt.Sprintf("ballot-%d", vs.count)
+	ba := *newBallotAgent(ballotID, req.Rule, nil, end, req.VoterIds, make(comsoc.Profile, 0), make([]comsoc.Alternative, 0), make([]comsoc.Alternative, 0), make([]int64, 0))
+
+	for i := int64(0); i < req.Alts; i++ {
+		ba.alternatives = append(ba.alternatives, comsoc.Alternative(i))
 	}
 
 	tieB := make([]comsoc.Alternative, 0)
 	if req.TieBreak == nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	} else {
 		for _, v := range req.TieBreak {
 			tieB = append(tieB, v)
 		}
 	}
-	vs.Lock()
-	defer vs.Unlock()
-	ballotID := fmt.Sprintf("ballot-%d", vs.count)
-	ba := *newBallotAgent(ballotID, req.Rule, nil, end, req.VoterIds, make(comsoc.Profile, 0), make([]comsoc.Alternative, 0), req.TieBreak, make([]int64, 0))
+	ba.tiebreak = tieB
+
+	err = comsoc.CheckProfile(tieB, ba.alternatives)
+	if err != nil {
+		w.WriteHeader(http.StatusUpgradeRequired)
+		return
+	}
 
 	switch req.Rule {
 	case "majority", "borda", "approval", "stv", "copeland":
 		ba.rule = comsoc.SWFFactory(SWFMap[req.Rule], comsoc.TieBreakFactory(tieB))
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	for i := int64(0); i < req.Alts; i++ {
-		ba.alternatives = append(ba.alternatives, comsoc.Alternative(i))
+		return
 	}
 
 	fmt.Printf("starting a new session based on the %s rule\n", req.Rule)
@@ -162,7 +174,7 @@ func (vs *ServerRest) vote(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		w.WriteHeader(val)
-		fmt.Printf("%s has voted for %s, with preferences %v, and approval threshold %v \n", req.VoterID, req.BallotID, req.Prefs, req.Options)
+		fmt.Printf("%s has voted for %s, with preferences %v, and options %v \n", req.VoterID, req.BallotID, req.Prefs, req.Options)
 	}
 }
 

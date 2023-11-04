@@ -21,13 +21,12 @@ func randomPreferences(alts []comsoc.Alternative) []comsoc.Alternative {
 }
 
 func main() {
-	// on crée 5 alternatives
-	alts := make([]comsoc.Alternative, 4)
-	for i := 0; i < 4; i++ {
+	alts := make([]comsoc.Alternative, 10)
+	for i := 0; i < 10; i++ {
 		alts[i] = comsoc.Alternative(i)
 	}
 
-	nbVoters := 3
+	nbVoters := 100
 	agents := make(map[agt.AgentID]agt.Agent, nbVoters)
 	for i := 0; i < nbVoters; i++ {
 		id := agt.AgentID(fmt.Sprintf("agent-%d", i))
@@ -43,7 +42,7 @@ func main() {
 	agents[badVoterId] = *agt.NewAgent(badVoterId, badPreferences, threshold)
 
 	// variables nécessaires à la création d'un vote
-	deadline := time.Now().Add(1 * time.Second).Format(time.RFC3339)
+	deadline := time.Now().Add(4 * time.Second).Format(time.RFC3339)
 	ids := make([]agt.AgentID, 0, len(agents))
 	for k := range agents {
 		ids = append(ids, k)
@@ -63,6 +62,6 @@ func main() {
 	}
 
 	// on récupère les résultats
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	organizer.GetResults(ballotID)
 }

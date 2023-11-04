@@ -1,13 +1,15 @@
-package comsoc
+package methods
 
-func CondorcetWinner(p Profile) (bestAlts []Alternative, err error) {
-	bestAlts = make([]Alternative, 0)
+import "github.com/adrsimon/voting-system-ia04/comsoc"
+
+func CondorcetWinner(p comsoc.Profile) (bestAlts []comsoc.Alternative, err error) {
+	bestAlts = make([]comsoc.Alternative, 0)
 
 	for _, v := range p[0] { // se base sur le fait que le profile soit vérifié
 		winner := true
 		for _, v2 := range p[0] {
 			if v != v2 {
-				check, err := IsPrefProfil(v, v2, p)
+				check, err := comsoc.IsPrefProfil(v, v2, p)
 				if err != nil {
 					return bestAlts, err
 				}
@@ -18,7 +20,7 @@ func CondorcetWinner(p Profile) (bestAlts []Alternative, err error) {
 			}
 		}
 		if winner {
-			bestAlts = append(bestAlts, Alternative(v))
+			bestAlts = append(bestAlts, comsoc.Alternative(v))
 		}
 	}
 	return bestAlts, nil

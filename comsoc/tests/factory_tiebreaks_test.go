@@ -1,18 +1,20 @@
-package comsoc
+package tests
 
 import (
+	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"testing"
 )
 
 func TestTiebreakFactory(t *testing.T) { // the lower alt wins
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 		{3, 2, 1},
 	}
 
-	res, err := MajoritySCF(prefs)
+	res, err := methods.MajoritySCF(prefs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -20,7 +22,7 @@ func TestTiebreakFactory(t *testing.T) { // the lower alt wins
 		t.Errorf("error, there should be a draw")
 	}
 
-	tiebreak := TieBreakFactory([]Alternative{1, 2, 3})
+	tiebreak := comsoc.TieBreakFactory([]comsoc.Alternative{1, 2, 3})
 
 	res2, err2 := tiebreak(res)
 	if err2 != nil {
@@ -33,14 +35,14 @@ func TestTiebreakFactory(t *testing.T) { // the lower alt wins
 }
 
 func TestSWFFactory(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 3, 2},
 		{3, 2, 1},
 		{3, 2, 1},
 	}
 
-	tiebreak := TieBreakFactory([]Alternative{1, 2, 3})
-	swf := SWFFactory(BordaSWF, tiebreak)
+	tiebreak := comsoc.TieBreakFactory([]comsoc.Alternative{1, 2, 3})
+	swf := comsoc.SWFFactory(methods.BordaSWF, tiebreak)
 	res, err := swf(prefs)
 	if err != nil {
 		t.Error(err)
@@ -54,8 +56,8 @@ func TestSWFFactory(t *testing.T) {
 	if res[2] != 2 {
 		t.Errorf("error, winner should be 2, %d computed", res[2])
 	}
-	tiebreak2 := TieBreakFactory([]Alternative{3, 2, 1})
-	swf2 := SWFFactory(BordaSWF, tiebreak2)
+	tiebreak2 := comsoc.TieBreakFactory([]comsoc.Alternative{3, 2, 1})
+	swf2 := comsoc.SWFFactory(methods.BordaSWF, tiebreak2)
 	res2, err2 := swf2(prefs)
 	if err2 != nil {
 		t.Error(err2)
@@ -73,16 +75,16 @@ func TestSWFFactory(t *testing.T) {
 }
 
 func TestScfFactory(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 3, 2},
 		{3, 2, 1},
 		{3, 2, 1},
 	}
 
-	tiebreak := TieBreakFactory([]Alternative{1, 2, 3})
-	scf := SCFFactory(BordaSCF, tiebreak)
+	tiebreak := comsoc.TieBreakFactory([]comsoc.Alternative{1, 2, 3})
+	scf := comsoc.SCFFactory(methods.BordaSCF, tiebreak)
 	res, err := scf(prefs)
-	
+
 	if err != nil {
 		t.Error(err)
 	}
@@ -90,12 +92,12 @@ func TestScfFactory(t *testing.T) {
 		t.Errorf("error, winner should be 3, %d computed", res)
 	}
 
-	prefs2 := [][]Alternative{
+	prefs2 := [][]comsoc.Alternative{
 		{1, 3, 2},
 		{3, 2, 1},
 		{2, 1, 3},
 	}
-	scf2 := SCFFactory(BordaSCF, tiebreak)
+	scf2 := comsoc.SCFFactory(methods.BordaSCF, tiebreak)
 	res2, err := scf2(prefs2)
 
 	if err != nil {

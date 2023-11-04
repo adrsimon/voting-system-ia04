@@ -2,16 +2,17 @@ package agt
 
 import (
 	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"sync"
 	"time"
 )
 
 var SWFMap = map[string]func(comsoc.Profile, ...int64) (comsoc.Count, error){
-	"majority": comsoc.MajoritySWF,
-	"borda":    comsoc.BordaSWF,
-	"approval": comsoc.ApprovalSWF,
-	"stv":      comsoc.STVSWF,
-	"copeland": comsoc.CopelandSWF,
+	"majority": methods.MajoritySWF,
+	"borda":    methods.BordaSWF,
+	"approval": methods.ApprovalSWF,
+	"stv":      methods.STVSWF,
+	"copeland": methods.CopelandSWF,
 }
 
 type AgentID string

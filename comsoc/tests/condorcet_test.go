@@ -1,17 +1,19 @@
-package comsoc
+package tests
 
 import (
+	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"testing"
 )
 
 func TestCondorcet(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 3, 2},
 		{3, 2, 1},
 		{3, 2, 1},
 	}
 
-	bests, err := CondorcetWinner(prefs)
+	bests, err := methods.CondorcetWinner(prefs)
 	if err != nil {
 		t.Error(err)
 	}

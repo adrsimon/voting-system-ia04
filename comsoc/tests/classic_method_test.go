@@ -1,19 +1,21 @@
 // version 2.0.0
 
-package comsoc
+package tests
 
 import (
+	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"testing"
 )
 
 func TestBordaSWF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, _ := BordaSWF(prefs)
+	res, _ := methods.BordaSWF(prefs)
 	if res[1] != 4 {
 		t.Errorf("error, result for 1 should be 4, %d computed", res[1])
 	}
@@ -26,13 +28,13 @@ func TestBordaSWF(t *testing.T) {
 }
 
 func TestBordaSCF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, err := BordaSCF(prefs)
+	res, err := methods.BordaSCF(prefs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,13 +45,13 @@ func TestBordaSCF(t *testing.T) {
 }
 
 func TestMajoritySWF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, _ := MajoritySWF(prefs)
+	res, _ := methods.MajoritySWF(prefs)
 
 	if res[1] != 2 {
 		t.Errorf("error, result for 1 should be 2, %d computed", res[1])
@@ -63,13 +65,13 @@ func TestMajoritySWF(t *testing.T) {
 }
 
 func TestMajoritySCF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, err := MajoritySCF(prefs)
+	res, err := methods.MajoritySCF(prefs)
 
 	if err != nil {
 		t.Error(err)
@@ -81,14 +83,14 @@ func TestMajoritySCF(t *testing.T) {
 }
 
 func TestApprovalSWF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 3, 2},
 		{2, 3, 1},
 	}
 	thresholds := []int64{2, 1, 2}
 
-	res, _ := ApprovalSWF(prefs, thresholds...)
+	res, _ := methods.ApprovalSWF(prefs, thresholds...)
 
 	if res[1] != 2 {
 		t.Errorf("error, result for 1 should be 2, %d computed", res[1])
@@ -102,14 +104,14 @@ func TestApprovalSWF(t *testing.T) {
 }
 
 func TestApprovalSCF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 3, 2},
 		{1, 2, 3},
 		{2, 1, 3},
 	}
 	thresholds := []int64{2, 1, 2}
 
-	res, err := ApprovalSCF(prefs, thresholds...)
+	res, err := methods.ApprovalSCF(prefs, thresholds...)
 
 	if err != nil {
 		t.Error(err)
@@ -120,20 +122,20 @@ func TestApprovalSCF(t *testing.T) {
 }
 
 func TestCondorcetWinner(t *testing.T) {
-	prefs1 := [][]Alternative{
+	prefs1 := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	prefs2 := [][]Alternative{
+	prefs2 := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{2, 3, 1},
 		{3, 1, 2},
 	}
 
-	res1, _ := CondorcetWinner(prefs1)
-	res2, _ := CondorcetWinner(prefs2)
+	res1, _ := methods.CondorcetWinner(prefs1)
+	res2, _ := methods.CondorcetWinner(prefs2)
 
 	if len(res1) == 0 || res1[0] != 1 {
 		t.Errorf("error, 1 should be the only best alternative for prefs1")

@@ -1,19 +1,21 @@
 // version 2.0.0
 
-package comsoc
+package tests
 
 import (
+	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"testing"
 )
 
 func TestCopelandSWF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, _ := CopelandSWF(prefs)
+	res, _ := methods.CopelandSWF(prefs)
 	if res[1] != 2 {
 		t.Errorf("error, result for 1 should be 2, %d computed", res[1])
 	}
@@ -26,13 +28,13 @@ func TestCopelandSWF(t *testing.T) {
 }
 
 func TestCopelandSCF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, err := CopelandSCF(prefs)
+	res, err := methods.CopelandSCF(prefs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,13 +45,13 @@ func TestCopelandSCF(t *testing.T) {
 }
 
 func TestSTVSWF(t *testing.T) { // pensez  a expliquer valeur du count readme
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, _ := STVSWF(prefs, []int64{1, 2, 3}...)
+	res, _ := methods.STVSWF(prefs, []int64{1, 2, 3}...)
 
 	if res[1] != 3 {
 		t.Errorf("error, result for 1 should be 3, %d computed", res[1])
@@ -60,14 +62,14 @@ func TestSTVSWF(t *testing.T) { // pensez  a expliquer valeur du count readme
 	if res[3] != 2 {
 		t.Errorf("error, result for 3 should be 2, %d computed", res[3])
 	}
-	prefs2 := [][]Alternative{
+	prefs2 := [][]comsoc.Alternative{
 		{1, 2, 3, 4},
 		{1, 2, 3, 4},
 		{3, 2, 1, 4},
 		{3, 2, 1, 4},
 	}
 
-	res2, _ := STVSWF(prefs2, []int64{4, 2, 3, 1}...)
+	res2, _ := methods.STVSWF(prefs2, []int64{4, 2, 3, 1}...)
 
 	if res2[1] != 3 {
 		t.Errorf("error, result for 1 should be 2, %d computed", res2[1])
@@ -84,13 +86,13 @@ func TestSTVSWF(t *testing.T) { // pensez  a expliquer valeur du count readme
 }
 
 func TestSTVSCF(t *testing.T) {
-	prefs := [][]Alternative{
+	prefs := [][]comsoc.Alternative{
 		{1, 2, 3},
 		{1, 2, 3},
 		{3, 2, 1},
 	}
 
-	res, err := MajoritySCF(prefs)
+	res, err := methods.MajoritySCF(prefs)
 
 	if err != nil {
 		t.Error(err)
@@ -99,14 +101,14 @@ func TestSTVSCF(t *testing.T) {
 	if len(res) != 1 || res[0] != 1 {
 		t.Errorf("error, 1 should be the only best Alternative")
 	}
-	prefs2 := [][]Alternative{
+	prefs2 := [][]comsoc.Alternative{
 		{1, 2, 3, 4},
 		{1, 2, 3, 4},
 		{3, 2, 1, 4},
 		{3, 2, 1, 4},
 	}
 
-	res2, err := STVSCF(prefs2, []int64{4, 2, 3, 1}...)
+	res2, err := methods.STVSCF(prefs2, []int64{4, 2, 3, 1}...)
 	if err != nil {
 		t.Error(err)
 	}

@@ -16,8 +16,8 @@ func NewServerRest(addr string) *ServerRest {
 	return &ServerRest{id: addr, addr: addr, ballotAgents: make(map[string]*ballotAgent), count: 0}
 }
 
-func newBallotAgent(ballotID string, rule func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, alts []comsoc.Alternative, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
-	return &ballotAgent{ballotID: ballotID, rule: rule, deadline: deadline, voterID: voterID, profile: profile, alternatives: alts, tiebreak: tiebreak, thresholds: thresholds}
+func newBallotAgent(ballotID string, rulename string, rule func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error), deadline time.Time, voterID []AgentID, profile comsoc.Profile, alts []comsoc.Alternative, tiebreak []comsoc.Alternative, thresholds []int64) *ballotAgent {
+	return &ballotAgent{ballotID: ballotID, rulename: rulename, rule: rule, deadline: deadline, voterID: voterID, profile: profile, alternatives: alts, tiebreak: tiebreak, thresholds: thresholds}
 }
 
 func (vs *ServerRest) checkMethod(method string, w http.ResponseWriter, r *http.Request) bool {
@@ -49,6 +49,10 @@ func (ba *ballotAgent) vote(req VoteRequest, c chan int) {
 		c <- http.StatusForbidden
 		return
 	} else if comsoc.CheckProfile(req.Prefs, ba.alternatives) != nil {
+		c <- http.StatusBadRequest
+		return
+	} else if ba.rulename == "approval" && len(req.Options) == 1 && req.Options[0] > 0 && req.Options[0] <= int64(len(ba.alternatives)) {
+		// checking right approval threshold
 		c <- http.StatusBadRequest
 		return
 	} else {
@@ -93,7 +97,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	vs.Lock()
 	defer vs.Unlock()
 	ballotID := fmt.Sprintf("ballot-%d", vs.count)
-	ba := *newBallotAgent(ballotID, nil, end, req.VoterIds, make(comsoc.Profile, 0), make([]comsoc.Alternative, 0), req.TieBreak, make([]int64, 0))
+	ba := *newBallotAgent(ballotID, req.Rule, nil, end, req.VoterIds, make(comsoc.Profile, 0), make([]comsoc.Alternative, 0), req.TieBreak, make([]int64, 0))
 
 	switch req.Rule {
 	case "majority", "borda", "approval", "stv", "copeland":

@@ -50,6 +50,7 @@ type NewBallotRequest struct {
 type ballotAgent struct {
 	sync.Mutex
 	ballotID     string
+	rulename     string
 	rule         func(comsoc.Profile, ...int64) ([]comsoc.Alternative, error)
 	deadline     time.Time
 	voterID      []AgentID

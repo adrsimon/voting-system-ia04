@@ -22,24 +22,22 @@ func randomPreferences(alts []comsoc.Alternative) []comsoc.Alternative {
 
 func main() {
 	// on crée 5 alternatives
-	alts := make([]comsoc.Alternative, 5)
-	for i := 0; i < 5; i++ {
+	alts := make([]comsoc.Alternative, 4)
+	for i := 0; i < 4; i++ {
 		alts[i] = comsoc.Alternative(i)
 	}
 
-	nbVoters := 10
+	nbVoters := 3
 	agents := make(map[agt.AgentID]agt.Agent, nbVoters)
 	for i := 0; i < nbVoters; i++ {
 		id := agt.AgentID(fmt.Sprintf("agent-%d", i))
 		threshold := make([]int64, 0)
-		threshold = append(threshold, int64(rand.Intn(len(alts)+1)))
 		agents[id] = *agt.NewAgent(id, randomPreferences(alts), threshold)
 
 	}
 
 	badVoterId := agt.AgentID("agent-11")
 	threshold := make([]int64, 0)
-	threshold = append(threshold, int64(rand.Intn(len(alts)+1)))
 	badPreferences := make([]comsoc.Alternative, 0)
 	badPreferences = append(badPreferences, comsoc.Alternative(12))
 	agents[badVoterId] = *agt.NewAgent(badVoterId, badPreferences, threshold)

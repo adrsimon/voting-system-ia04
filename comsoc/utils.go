@@ -37,7 +37,7 @@ func IsPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
 }
 
 func MaxCount(count Count) (bestAlts []Alternative) {
-	maximum := 0
+	maximum := -(2 << 31)
 	for i, v := range count {
 		if v > maximum {
 			bestAlts = make([]Alternative, 0)

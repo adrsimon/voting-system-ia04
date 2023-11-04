@@ -6,8 +6,8 @@ func CopelandSWF(p Profile, _ ...int64) (count Count, err error) {
 		count[v1] = 0
 		for _, v2 := range p[0] {
 			cmp := 0
-			for _, v := range p {
-				if v1 != v2 {
+			if v1 != v2 {
+				for _, v := range p {
 					if IsPref(v1, v2, v) {
 						cmp++
 					} else {

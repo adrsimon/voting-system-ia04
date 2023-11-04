@@ -1,7 +1,6 @@
 package methods
 
 import (
-	"fmt"
 	"github.com/adrsimon/voting-system-ia04/comsoc"
 )
 
@@ -11,7 +10,6 @@ func ApprovalSWF(p comsoc.Profile, thresholds ...int64) (count comsoc.Count, err
 		for j := int64(0); j < thresholds[i]; j++ {
 			count[v[j]]++
 		}
-		fmt.Println(count)
 	}
 	return count, nil
 }

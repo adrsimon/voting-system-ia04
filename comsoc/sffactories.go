@@ -1,6 +1,8 @@
 package comsoc
 
-import "golang.org/x/exp/slices"
+import (
+	"golang.org/x/exp/slices"
+)
 
 func SWFFactory(swf func(p Profile, options ...int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) ([]Alternative, error) {
 	f := func(profile Profile, options ...int64) ([]Alternative, error) {

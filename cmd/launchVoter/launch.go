@@ -45,7 +45,7 @@ func main() {
 	agents[badVoterId] = *agt.NewAgent(badVoterId, badPreferences, threshold)
 
 	// variables nécessaires à la création d'un vote
-	deadline := time.Now().Add(5 * time.Second).Format(time.RFC3339)
+	deadline := time.Now().Add(1 * time.Second).Format(time.RFC3339)
 	ids := make([]agt.AgentID, 0, len(agents))
 	for k := range agents {
 		ids = append(ids, k)
@@ -54,7 +54,7 @@ func main() {
 	// on récupère le premier agent qui se chargera de créer les sessions et de récupérer les résultats
 	organizer := agents["agent-1"]
 	tb := alts
-	ballotID, err := organizer.StartSession("approval", deadline, ids, int64(len(alts)), tb)
+	ballotID, err := organizer.StartSession("copeland", deadline, ids, int64(len(alts)), tb)
 	if err != nil {
 		return
 	}
@@ -65,6 +65,6 @@ func main() {
 	}
 
 	// on récupère les résultats
-	time.Sleep(7 * time.Second)
+	time.Sleep(2 * time.Second)
 	organizer.GetResults(ballotID)
 }

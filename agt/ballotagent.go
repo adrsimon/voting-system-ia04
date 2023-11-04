@@ -200,7 +200,18 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ranking, err := ba.rule(ba.profile, ba.thresholds...)
+	ranking, err := make([]comsoc.Alternative, 0), error(nil)
+	if ba.rulename == "approval" {
+		ranking, err = ba.rule(ba.profile, ba.thresholds...)
+	} else if ba.rulename == "stv" {
+		tiebreak := make([]int64, 0)
+		for _, v := range ba.tiebreak {
+			tiebreak = append(tiebreak, int64(v))
+		}
+		ranking, err = ba.rule(ba.profile, tiebreak...)
+	} else {
+		ranking, err = ba.rule(ba.profile)
+	}
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)

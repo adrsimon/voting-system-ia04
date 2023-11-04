@@ -64,7 +64,7 @@ func MinCount(count Count) (worstAlts []Alternative) {
 	return
 }
 
-func deleteAlternative(p Profile, i int64) Profile {
+func DeleteAlternative(p Profile, i int64) Profile {
 	for j, v := range p {
 		rank := Rank(Alternative(i), v)
 		p[j] = append(v[:rank], v[rank+1:]...)

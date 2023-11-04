@@ -26,10 +26,10 @@ func STVSWF(p comsoc.Profile, tiebreak ...int64) (count comsoc.Count, err error)
 						}
 					}
 				}
-				p = comsoc.deleteAlternative(p, tiebreak[k])
+				p = comsoc.DeleteAlternative(p, tiebreak[k])
 				count[comsoc.Alternative(tiebreak[k])] = i
 			} else {
-				p = comsoc.deleteAlternative(p, int64(worstAlt[0]))
+				p = comsoc.DeleteAlternative(p, int64(worstAlt[0]))
 				count[worstAlt[0]] = i
 			}
 		}

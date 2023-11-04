@@ -2,9 +2,9 @@ package comsoc
 
 import "golang.org/x/exp/slices"
 
-func SWFFactory(swf func(p Profile, thresholds ...int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) ([]Alternative, error) {
-	f := func(profile Profile, thresholds ...int64) ([]Alternative, error) {
-		count, err := swf(profile, thresholds...)
+func SWFFactory(swf func(p Profile, options ...int64) (Count, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) ([]Alternative, error) {
+	f := func(profile Profile, options ...int64) ([]Alternative, error) {
+		count, err := swf(profile, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -29,9 +29,9 @@ func SWFFactory(swf func(p Profile, thresholds ...int64) (Count, error), tiebrea
 	return f
 }
 
-func SCFFactory(scf func(p Profile, thresholds ...int64) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) (Alternative, error) {
-	f := func(profile Profile, thresholds ...int64) (Alternative, error) {
-		alts, err := scf(profile, thresholds...)
+func SCFFactory(scf func(p Profile, options ...int64) ([]Alternative, error), tiebreak func([]Alternative) (Alternative, error)) func(Profile, ...int64) (Alternative, error) {
+	f := func(profile Profile, options ...int64) (Alternative, error) {
+		alts, err := scf(profile, options...)
 		if err != nil {
 			return Alternative(0), err
 		}

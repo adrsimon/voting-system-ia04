@@ -2,16 +2,23 @@ package comsoc
 
 func CopelandSWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
-	for _, v := range p {
-		for i := 0; i < len(v); i++ {
-			for j := i + 1; j < len(v); j++ {
-				if v[i] != v[j] {
-					if IsPref(v[i], v[j], v) {
-						count[v[i]]++
+	for _, v1 := range p[0] {
+		count[v1] = 0
+		for _, v2 := range p[0] {
+			cmp := 0
+			for _, v := range p {
+				if v1 != v2 {
+					if IsPref(v1, v2, v) {
+						cmp++
 					} else {
-						count[v[j]]++
+						cmp--
 					}
 				}
+			}
+			if cmp > 0 {
+				count[v1]++
+			} else if cmp < 0 {
+				count[v1]--
 			}
 		}
 	}

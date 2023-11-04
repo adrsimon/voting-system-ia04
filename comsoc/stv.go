@@ -1,38 +1,41 @@
 package comsoc
 
-func STVSWF(p Profile, _ ...int64) (count Count, err error) {
+func STVSWF(p Profile, tiebreak ...int64) (count Count, err error) {
 	count = make(Count)
-	for _, v := range p {
-		count[v[0]]++
-	}
-	return count, nil
-}
-
-func STVSCF(p Profile, _ ...int64) (bestAlts []Alternative, err error) {
-	for {
-		count, err := STVSWF(p)
+	nbVote := len(p[0])
+	for i := 1; i <= nbVote; i++ {
+		countmp, err := MajoritySWF(p)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(count) == 1 {
-			return MaxCount(count), nil
-		}
-
-		worstAlts := MinCount(count)
-		if len(worstAlts) == len(count) || len(worstAlts) == 0 {
-			return MaxCount(count), nil
-		}
-
-		for _, worstAlt := range worstAlts {
-			for i, voter := range p {
-				for j, alt := range voter {
-					if alt == worstAlt {
-						p[i] = append(voter[:j], voter[j+1:]...)
+		worstAlt := MinCount(countmp)
+		if len(countmp) == 1 {
+			count[worstAlt[0]] = i
+		} else {
+			if len(worstAlt) > 1 {
+				k := 0
+				for j, v := range tiebreak {
+					for _, v2 := range worstAlt {
+						if Alternative(v) == v2 {
+							if j > k {
+								k = j
+							}
+						}
 					}
 				}
+				p = deleteAlternative(p, tiebreak[k])
+				count[Alternative(tiebreak[k])] = i
+			} else {
+				p = deleteAlternative(p, int64(worstAlt[0]))
+				count[worstAlt[0]] = i
 			}
-			delete(count, worstAlt)
 		}
 	}
+	return count, nil
+}
+
+func STVSCF(p Profile, tiebreak ...int64) (bestAlts []Alternative, err error) {
+	count, err := STVSWF(p, tiebreak...)
+	return MaxCount(count), err
 }

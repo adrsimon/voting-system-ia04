@@ -64,6 +64,14 @@ func MinCount(count Count) (worstAlts []Alternative) {
 	return
 }
 
+func deleteAlternative(p Profile, i int64) Profile {
+	for j, v := range p {
+		rank := Rank(Alternative(i), v)
+		p[j] = append(v[:rank], v[rank+1:]...)
+	}
+	return p
+}
+
 func CheckProfile(prefs []Alternative, alts []Alternative) error {
 	if len(prefs) != len(alts) {
 		return errors.New("alts and prefs doesn't have the same size")

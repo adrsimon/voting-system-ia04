@@ -2,6 +2,9 @@ package comsoc
 
 func MajoritySWF(p Profile, _ ...int64) (count Count, err error) {
 	count = make(Count)
+	for _, v := range p[0] {
+		count[v] = 0
+	}
 	for _, v := range p {
 		count[v[0]]++
 	}

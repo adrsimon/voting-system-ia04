@@ -221,9 +221,6 @@ func (vs *ServerRest) methods(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vs.Lock()
-	defer vs.Unlock()
-
 	methods := make([]string, 0)
 	for v := range SWFMap {
 		methods = append(methods, v)

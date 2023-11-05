@@ -21,17 +21,17 @@ func randomPreferences(alts []comsoc.Alternative) []comsoc.Alternative {
 }
 
 func main() {
-	alts := make([]comsoc.Alternative, 3)
-	for i := 0; i < 3; i++ {
+	alts := make([]comsoc.Alternative, 5)
+	for i := 0; i < 5; i++ {
 		alts[i] = comsoc.Alternative(i)
 	}
 
-	nbVoters := 5
+	nbVoters := 15
 	agents := make(map[agt.AgentID]agt.Agent, nbVoters)
 	for i := 0; i < nbVoters; i++ {
 		id := agt.AgentID(fmt.Sprintf("agent-%d", i))
 		threshold := make([]int64, 0)
-		threshold = append(threshold, int64(rand.Intn(len(alts))))
+		threshold = append(threshold, 1+int64(rand.Intn(len(alts))))
 		agents[id] = *agt.NewAgent(id, randomPreferences(alts), threshold)
 		fmt.Println(agents[id])
 		fmt.Println(threshold)
@@ -54,7 +54,7 @@ func main() {
 	// on récupère le premier agent qui se chargera de créer les sessions et de récupérer les résultats
 	organizer := agents["agent-1"]
 	tb := alts
-	ballotID, err := organizer.StartSession("approval", deadline, ids, int64(len(alts)), tb)
+	ballotID, err := organizer.StartSession("majority", deadline, ids, int64(len(alts)), tb)
 	if err != nil {
 		return
 	}

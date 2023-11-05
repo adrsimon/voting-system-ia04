@@ -83,6 +83,11 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Alts <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	end, err := time.Parse(time.RFC3339, req.Deadline)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -115,7 +120,7 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 
 	err = comsoc.CheckProfile(tieB, ba.alternatives)
 	if err != nil {
-		w.WriteHeader(http.StatusUpgradeRequired)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

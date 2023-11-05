@@ -53,7 +53,7 @@ func (ba *ballotAgent) vote(req VoteRequest, c chan int) {
 	} else if comsoc.CheckProfile(req.Prefs, ba.alternatives) != nil { // bad vote => 400
 		c <- http.StatusBadRequest
 		return
-	} else if ba.rulename == "approval" && len(req.Options) == 1 && req.Options[0] > 0 && req.Options[0] <= int64(len(ba.alternatives)) { // missing option => 400
+	} else if ba.rulename == "approval" && (len(req.Options) != 1 || req.Options[0] <= 0 || req.Options[0] > int64(len(ba.alternatives))) { // missing option => 400
 		c <- http.StatusBadRequest
 		return
 	} else {

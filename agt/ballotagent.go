@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/adrsimon/voting-system-ia04/comsoc"
+	"github.com/adrsimon/voting-system-ia04/comsoc/methods"
 	"log"
 	"net/http"
 	"slices"
@@ -121,6 +122,8 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 	switch req.Rule {
 	case "majority", "borda", "approval", "stv", "copeland":
 		ba.rule = comsoc.SWFFactory(SWFMap[req.Rule], comsoc.TieBreakFactory(tieB))
+	case "condorcet":
+		ba.rule = methods.CondorcetWinner
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -232,8 +235,10 @@ func (vs *ServerRest) result(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	winner := ranking[0]
-
+	winner := comsoc.Alternative(-1)
+	if len(ranking) > 0 {
+		winner = ranking[0]
+	}
 	buf.Reset()
 	resp, err := json.Marshal(ResultResponse{Winner: winner, Ranking: ranking})
 	err = binary.Write(buf, binary.LittleEndian, resp)
@@ -256,6 +261,7 @@ func (vs *ServerRest) methods(w http.ResponseWriter, r *http.Request) {
 	for v := range SWFMap {
 		methods = append(methods, v)
 	}
+	methods = append(methods, "condorcet")
 
 	buf := new(bytes.Buffer)
 	resp, err := json.Marshal(MethodsResponse{methods})

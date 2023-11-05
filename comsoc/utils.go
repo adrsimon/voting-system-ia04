@@ -27,9 +27,7 @@ func IsPrefProfil(alt1, alt2 Alternative, p Profile) (bool, error) {
 			count--
 		}
 	}
-	if count == 0 {
-		return false, errors.New("pas de préférence, erreur relation d'ordre nécessaire")
-	} else if count >= 1 {
+	if count >= 1 {
 		return true, nil
 	} else {
 		return false, nil

@@ -2,7 +2,7 @@ package methods
 
 import "github.com/adrsimon/voting-system-ia04/comsoc"
 
-func CondorcetWinner(p comsoc.Profile) (bestAlts []comsoc.Alternative, err error) {
+func CondorcetWinner(p comsoc.Profile, _ ...int64) (bestAlts []comsoc.Alternative, err error) {
 	bestAlts = make([]comsoc.Alternative, 0)
 
 	for _, v := range p[0] { // se base sur le fait que le profile soit vérifié

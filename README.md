@@ -49,7 +49,7 @@ Vote par majorité, vote de Borda, vote par approbation, vote simple transférab
 - Les principaux types utilisés dans ce projet pour définir les agents sont les suivants :
   - ```go
     type ServerRest struct {
-	       sync.Mutex
+	    sync.Mutex
         id           string
         addr         string
         ballotAgents map[string]*ballotAgent

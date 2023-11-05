@@ -14,11 +14,17 @@ Le but de ce TD est d'implémenter du bureau de vote. Les méthodes de vote impl
 - cmd : contient une implémentation du système avec une mise en pratique
 
 ### Installation
-- Cloner le projet : `git clone https://github.com/adrsimon/voting-system-ia04`
-- Installer le projet : `go install cmd/launchBallot`
-- Lancer le serveur de vote : `launchBallot`
 
+Méthode 1 :
+- Cloner le projet : `git clone https://github.com/adrsimon/voting-system-ia04`
+- Installer le serveur Rest : `go install cmd/launchBallot`
+- Lancer le serveur de vote : `launchBallot`
 Si vous souhaitez lancer des votes en local via un script go, utilisez la commande `go run cmd/launchBallot/launch.go`.
+
+Méthode 2 :
+- Créer un nouveau projet go : `mkdir projet && cd projet && go mod init projet`
+- Récupérer le package dans le projet : `go get github.com/adrsimon/voting-system-ia04@latest`
+- Utilisez le package comme n'importe quel autre package go.
 
 ### Méthodes de vote implémentées
 Vote par majorité, vote de Borda, vote par approbation, vote simple transférable, vote de Copeland, gagnant de Condorcet.
@@ -44,7 +50,7 @@ Vote par majorité, vote de Borda, vote par approbation, vote simple transférab
 - Les principaux types utilisés dans ce projet pour définir les agents sont les suivants :
   - ```go
     type ServerRest struct {
-	       sync.Mutex
+	    sync.Mutex
         id           string
         addr         string
         ballotAgents map[string]*ballotAgent

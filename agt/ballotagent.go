@@ -87,6 +87,10 @@ func (vs *ServerRest) newBallot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if time.Now().After(end) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	vs.Lock()
 	defer vs.Unlock()

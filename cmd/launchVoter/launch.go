@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/adrsimon/voting-system-ia04/agt"
 	"github.com/adrsimon/voting-system-ia04/comsoc"
-	"golang.org/x/exp/rand"
+	"math/rand"
 	"time"
 )
 
